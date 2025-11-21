@@ -1,0 +1,16 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+env/
+venv/
+build/
+dist/
+*.egg-info/
+*.egg
+.Python
+.env
+jarvis_history.txt
+jarvis_learning_queue.jsonl
+

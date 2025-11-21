@@ -1,0 +1,9 @@
+{
+  "user_name": "테스터",
+  "openai_api_key": "sk-unit-test-123",
+  "auto_learn": false,
+  "auto_learn_confirm": false,
+  "auto_learn_interval": 10,
+  "auto_learn_max_per_run": 3,
+  "openai_api_key_valid": false
+}
