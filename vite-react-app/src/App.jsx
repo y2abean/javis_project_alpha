@@ -19,14 +19,14 @@ function App() {
       <h1>Vite + React</h1>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+          카운트: {count}
         </button>
         <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
+          <code>src/App.jsx</code> 파일을 수정하고 저장하여 HMR을 테스트해보세요.
         </p>
       </div>
       <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
+        Vite와 React 로고를 클릭하여 더 알아보기
       </p>
     </>
   )
