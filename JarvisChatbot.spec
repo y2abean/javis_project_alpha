@@ -5,7 +5,7 @@ a = Analysis(
     ['gui_chatbot.py'],
     pathex=[],
     binaries=[],
-    datas=[('jarvis_config.json', '.'), ('jarvis_history.txt', '.')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
