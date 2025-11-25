@@ -1,8 +1,8 @@
 import time
-from gui_chatbot import JarvisGUI
+from gui_chatbot import NEURONGUI
 
 print('START GUI SIM')
-app = JarvisGUI()
+app = NEURONGUI()
 print('APP CREATED')
 # hide (simulate minimize to tray)
 app.withdraw()

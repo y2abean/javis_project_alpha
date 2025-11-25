@@ -6,7 +6,7 @@ import ChatInput from './components/ChatInput'
 
 function App() {
   const [messages, setMessages] = useState([
-    { sender: 'assistant', text: '안녕하세요! 무엇을 도와드릴까요?' }
+    { sender: 'assistant', text: '?�녕?�세?? 무엇???��??�릴까요?' }
   ]);
 
   const handleSend = async (text) => {
@@ -35,7 +35,7 @@ function App() {
     } catch (error) {
       setMessages(prev => [...prev, {
         sender: 'assistant',
-        text: `오류가 발생했습니다: ${error.message}`
+        text: `?�류가 발생?�습?�다: ${error.message}`
       }]);
     }
   };

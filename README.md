@@ -1,94 +1,94 @@
-   # 간단한 ChatGPT 스타일 챗봇 (자비스)
+   # 간단??ChatGPT ?��???챗봇 (?�비??
 
-   이 저장소는 터미널에서 구동되는 개인 비서 스타일의 챗봇 예제입니다.
+   ???�?�소???��??�에??구동?�는 개인 비서 ?��??�의 챗봇 ?�제?�니??
 
-   특징
-   - 규칙 기반(fallback) 응답
-   - OpenAI 연동(환경변수 또는 설정파일에 API 키를 넣으면 자동 사용)
-   - 대화 기록 저장, 간단한 명령어 지원
+   ?�징
+   - 규칙 기반(fallback) ?�답
+   - OpenAI ?�동(?�경변???�는 ?�정?�일??API ?��? ?�으�??�동 ?�용)
+   - ?�??기록 ?�?? 간단??명령??지??
 
-   빠른 시작
+   빠른 ?�작
 
-   1) 의존성 설치
+   1) ?�존???�치
 
    ```powershell
    py -3 -m pip install -r .\requirements.txt
    ```
 
-   2) OpenAI API 키 설정 (선택)
+   2) OpenAI API ???�정 (?�택)
 
-   - 현재 세션에만 설정:
+   - ?�재 ?�션?�만 ?�정:
 
    ```powershell
-   $env:OPENAI_API_KEY = 'sk-여기에_실제_API_KEY'
+   $env:OPENAI_API_KEY = 'sk-?�기???�제_API_KEY'
    ```
   
-   암호화된(보안) 저장
+   ?�호?�된(보안) ?�??
 
-   - 암호로 보호해서 저장하려면:
+   - ?�호�?보호?�서 ?�?�하?�면:
 
    ```powershell
-   py -3 .\chatbot.py --secure-set-key sk-여기에_실제_API_KEY
-   # 실행 시 암호 입력을 요청합니다. 복호화하려면 --decrypt-config 옵션 사용
+   py -3 .\chatbot.py --secure-set-key sk-?�기???�제_API_KEY
+   # ?�행 ???�호 ?�력???�청?�니?? 복호?�하?�면 --decrypt-config ?�션 ?�용
    ```
 
-   복호화:
+   복호??
 
    ```powershell
    py -3 .\chatbot.py --decrypt-config
    ```
 
-   - 설정 파일에 영구 저장(한 번만 실행):
+   - ?�정 ?�일???�구 ?�????번만 ?�행):
 
    ```powershell
-   py -3 .\chatbot.py --set-key sk-여기에_실제_API_KEY
+   py -3 .\chatbot.py --set-key sk-?�기???�제_API_KEY
    ```
 
-   - 또는 제공된 스크립트 사용:
+   - ?�는 ?�공???�크립트 ?�용:
 
    ```powershell
-   .\set_openai_env.ps1 sk-여기에_실제_API_KEY
+   .\set_openai_env.ps1 sk-?�기???�제_API_KEY
    ```
 
-   3) 실행 및 테스트
+   3) ?�행 �??�스??
 
    ```powershell
-   py -3 .\chatbot.py      # REPL 실행
-   py -3 .\chatbot.py --test  # 샘플 대화 테스트
+   py -3 .\chatbot.py      # REPL ?�행
+   py -3 .\chatbot.py --test  # ?�플 ?�???�스??
    ```
 
-   GUI 실행
+   GUI ?�행
 
    ```powershell
    py -3 .\gui_chatbot.py
-   # 또는 실행파일로 빌드 후 실행: .\dist\JarvisChatbot.exe
+   # ?�는 ?�행?�일�?빌드 ???�행: .\dist\NEURONChatbot.exe
    ```
   
-   GUI 기능 요약
-   - 입력창에서 엔터로 전송
-   - '복사' 버튼: 마지막 응답을 클립보드에 복사
-   - '저장' 버튼: 대화 기록을 텍스트 파일로 저장
+   GUI 기능 ?�약
+   - ?�력창에???�터�??�송
+   - '복사' 버튼: 마�?�??�답???�립보드??복사
+   - '?�?? 버튼: ?�??기록???�스???�일�??�??
 
 
-   앱(실행파일)으로 만들기(선택)
-   - PyInstaller로 단일 exe를 만들 수 있습니다:
+   ???�행?�일)?�로 만들�??�택)
+   - PyInstaller�??�일 exe�?만들 ???�습?�다:
 
    ```powershell
    py -3 -m pip install pyinstaller
-   py -3 -m PyInstaller --onefile --name JarvisChatbot chatbot.py
+   py -3 -m PyInstaller --onefile --name NEURONChatbot chatbot.py
    ```
 
-   생성된 실행파일은 `dist\JarvisChatbot.exe`에 위치합니다.
+   ?�성???�행?�일?� `dist\NEURONChatbot.exe`???�치?�니??
 
-   테스트
-   - 간단한 pytest 테스트를 추가했습니다. 다음으로 실행할 수 있습니다:
+   ?�스??
+   - 간단??pytest ?�스?��? 추�??�습?�다. ?�음?�로 ?�행?????�습?�다:
 
    ```powershell
    py -3 -m pytest -q
    ```
 
    보안
-   - API 키는 절대 공개 레포지토리에 커밋하지 마세요.
-   - local eval은 AST 기반으로 안전성 검사를 하지만, 아주 복잡한 입력에는 위험이 있을 수 있습니다.
+   - API ?�는 ?��? 공개 ?�포지?�리??커밋?��? 마세??
+   - local eval?� AST 기반?�로 ?�전??검?��? ?��?�? ?�주 복잡???�력?�는 ?�험???�을 ???�습?�다.
 
-   추가 개선 요청이 있으시면 GUI 포팅, 데스크톱 패키징(예: PyInstaller 추가 자동화), 또는 더 많은 명령어/플러그인 시스템을 구현해 드리겠습니다.
+   추�? 개선 ?�청???�으?�면 GUI ?�팅, ?�스?�톱 ?�키�??? PyInstaller 추�? ?�동??, ?�는 ??많�? 명령???�러그인 ?�스?�을 구현???�리겠습?�다.

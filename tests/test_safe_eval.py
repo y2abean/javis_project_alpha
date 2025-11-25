@@ -10,5 +10,5 @@ def test_safe_eval_pow_and_mod():
 
 
 def test_fallback_contains_input():
-    out = fallback_response('이건 테스트입니다')
-    assert '테스트' in out or '입력하신 내용' in out
+    out = fallback_response('?�건 ?�스?�입?�다')
+    assert '?�스?? in out or '?�력?�신 ?�용' in out

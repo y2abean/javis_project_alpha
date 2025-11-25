@@ -12,7 +12,7 @@ function ChatWindow({ messages }) {
             {messages.map((msg, index) => (
                 <div key={index} className={`message ${msg.sender}`}>
                     <div className="message-sender">
-                        {msg.sender === 'user' ? 'You' : 'Jarvis'}
+                        {msg.sender === 'user' ? 'You' : 'NEURON'}
                     </div>
                     <div className="message-bubble">
                         {msg.text}

@@ -26,5 +26,5 @@ def chat():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print("Starting Jarvis Backend Server on port 5000...")
+    print("Starting NEURON Backend Server on port 5000...")
     app.run(port=5000, debug=True)

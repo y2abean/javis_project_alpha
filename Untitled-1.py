@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-간단한 ChatGPT 스타일 챗봇 예제
+간단??ChatGPT ?��???챗봇 ?�제
 
-- OpenAI API 키가 `OPENAI_API_KEY` 환경변수로 설정되어 있고
-  `openai` 패키지가 설치되어 있으면 실제 OpenAI ChatCompletion을 호출합니다.
-- 그렇지 않으면 간단한 규칙 기반(fallback) 응답을 제공합니다.
+- OpenAI API ?��? `OPENAI_API_KEY` ?�경변?�로 ?�정?�어 ?�고
+  `openai` ?�키지가 ?�치?�어 ?�으�??�제 OpenAI ChatCompletion???�출?�니??
+- 그렇지 ?�으�?간단??규칙 기반(fallback) ?�답???�공?�니??
 
-사용법:
+?�용�?
   python Untitled-1.py          # REPL 모드
-  python Untitled-1.py --test   # 샘플 대화 실행 후 종료
+  python Untitled-1.py --test   # ?�플 ?�???�행 ??종료
 """
 
 import os
@@ -26,17 +26,17 @@ except Exception:
 	openai = None
 	#!/usr/bin/env python3
 	"""
-	개인 비서 '자비스' (간단한 ChatGPT 스타일 챗봇)
+	개인 비서 '?�비?? (간단??ChatGPT ?��???챗봇)
 
-	기능 요약:
-	- 규칙 기반 응답 및 선택적 OpenAI 통합
-	- 명령: `/setname 이름`, `/name`, `/history`, `/clear`, `/help`, `exit`
-	- 대화 히스토리 저장: `jarvis_history.txt` (타임스탬프 포함)
-	- 설정 저장: `jarvis_config.json`
+	기능 ?�약:
+	- 규칙 기반 ?�답 �??�택??OpenAI ?�합
+	- 명령: `/setname ?�름`, `/name`, `/history`, `/clear`, `/help`, `exit`
+	- ?�???�스?�리 ?�?? `NEURON_history.txt` (?�?�스?�프 ?�함)
+	- ?�정 ?�?? `NEURON_config.json`
 
-	사용법:
+	?�용�?
 	  python Untitled-1.py          # REPL 모드
-	  python Untitled-1.py --test   # 샘플 대화 실행 후 종료
+	  python Untitled-1.py --test   # ?�플 ?�???�행 ??종료
 	"""
 
 	import os
@@ -54,10 +54,10 @@ except Exception:
 		openai = None
 		_OPENAI_AVAILABLE = False
 
-	# 파일 경로 / 기본값
-	ASSISTANT_NAME = "자비스"
-	CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'jarvis_config.json')
-	HISTORY_PATH = os.path.join(os.path.dirname(__file__), 'jarvis_history.txt')
+	# ?�일 경로 / 기본�?
+	ASSISTANT_NAME = "?�비??
+	CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'NEURON_config.json')
+	HISTORY_PATH = os.path.join(os.path.dirname(__file__), 'NEURON_history.txt')
 
 
 	def load_config():
@@ -92,9 +92,9 @@ except Exception:
 	def call_openai(prompt):
 		key = os.getenv("OPENAI_API_KEY")
 		if not key:
-			raise RuntimeError("OPENAI_API_KEY 환경변수가 설정되어 있지 않습니다.")
+			raise RuntimeError("OPENAI_API_KEY ?�경변?��? ?�정?�어 ?��? ?�습?�다.")
 		if not _OPENAI_AVAILABLE:
-			raise RuntimeError("openai 패키지가 설치되어 있지 않습니다. `pip install openai`를 실행하세요.")
+			raise RuntimeError("openai ?�키지가 ?�치?�어 ?��? ?�습?�다. `pip install openai`�??�행?�세??")
 		openai.api_key = key
 		messages = [{"role": "user", "content": prompt}]
 		resp = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages, max_tokens=512)
@@ -102,7 +102,7 @@ except Exception:
 
 
 	def safe_eval_math(expr):
-		# 간단하고 안전한 수식 평가: AST로 허용된 노드만 허용
+		# 간단?�고 ?�전???�식 ?��?: AST�??�용???�드�??�용
 		allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Constant,
 						 ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod,
 						 ast.USub, ast.UAdd, ast.Load, ast.FloorDiv)
@@ -111,7 +111,7 @@ except Exception:
 
 		for n in ast.walk(node):
 			if not isinstance(n, allowed_nodes):
-				raise ValueError("허용되지 않는 연산입니다.")
+				raise ValueError("?�용?��? ?�는 ?�산?�니??")
 		return eval(compile(node, '<string>', mode='eval'))
 
 
@@ -119,46 +119,46 @@ except Exception:
 		cfg = load_config()
 		user_name = cfg.get('user_name') or ''
 		p = prompt.strip().lower()
-		if any(g in p for g in ["안녕", "안녕하세요", "ㅎㅇ"]):
+		if any(g in p for g in ["?�녕", "?�녕?�세??, "?�ㅇ"]):
 			if user_name:
-				return f"안녕하세요, {user_name}님! 무엇을 도와드릴까요?"
-			return f"안녕하세요! 저는 {ASSISTANT_NAME}입니다. 무엇을 도와드릴까요?"
-		if "이름" in p:
+				return f"?�녕?�세?? {user_name}?? 무엇???��??�릴까요?"
+			return f"?�녕?�세?? ?�??{ASSISTANT_NAME}?�니?? 무엇???��??�릴까요?"
+		if "?�름" in p:
 			if user_name:
-				return f"{user_name}님, 저는 개인 비서 {ASSISTANT_NAME}입니다. 필요하신 작업을 알려주세요."
-			return f"저는 개인 비서 {ASSISTANT_NAME}입니다. 먼저 이름을 알려주시면 더 친근하게 부를게요. (/setname 이름)"
-		if "시간" in p or "몇 시" in p:
-			return f"지금 시간은 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} 입니다."
+				return f"{user_name}?? ?�??개인 비서 {ASSISTANT_NAME}?�니?? ?�요?�신 ?�업???�려주세??"
+			return f"?�??개인 비서 {ASSISTANT_NAME}?�니?? 먼�? ?�름???�려주시�???친근?�게 부를게?? (/setname ?�름)"
+		if "?�간" in p or "�??? in p:
+			return f"지�??�간?� {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ?�니??"
 
-		# 수학 계산 요청 감지: 숫자와 연산기호 포함
+		# ?�학 계산 ?�청 감�?: ?�자?� ?�산기호 ?�함
 		if re.search(r"[0-9]+\s*[-+*/%^]", p) or p.startswith("계산"):
-			# 수식만 추출해보기
-			expr = re.sub(r"[가-힣\s:]*", "", prompt)
+			# ?�식�?추출?�보�?
+			expr = re.sub(r"[가-??s:]*", "", prompt)
 			expr = expr.replace('^', '**')
 			try:
 				val = safe_eval_math(expr)
 				return f"계산 결과: {val}"
 			except Exception:
-				return "죄송합니다. 계산을 해석하지 못했습니다. 예: 2+3*4"
+				return "죄송?�니?? 계산???�석?��? 못했?�니?? ?? 2+3*4"
 
-		# 기본 에코 / 안내
-		return f"아직 학습이 제한적입니다. 입력하신 내용: {prompt}"
+		# 기본 ?�코 / ?�내
+		return f"?�직 ?�습???�한?�입?�다. ?�력?�신 ?�용: {prompt}"
 
 
 	def repl():
 		cfg = load_config()
 		user_name = cfg.get('user_name') or ''
-		print(f"{ASSISTANT_NAME}에 오신 것을 환영합니다. 종료하려면 'exit' 또는 '종료'를 입력하세요.")
-		print("도움말: /help 를 입력하세요.")
+		print(f"{ASSISTANT_NAME}???�신 것을 ?�영?�니?? 종료?�려�?'exit' ?�는 '종료'�??�력?�세??")
+		print("?��?�? /help �??�력?�세??")
 		while True:
 			try:
 				prompt = input('You: ').strip()
 			except (EOFError, KeyboardInterrupt):
-				print('\n종료합니다.')
+				print('\n종료?�니??')
 				break
 			if not prompt:
 				continue
-			# 명령어 처리
+			# 명령??처리
 			if prompt.startswith('/'):
 				parts = prompt.split(maxsplit=1)
 				cmd = parts[0].lower()
@@ -166,51 +166,51 @@ except Exception:
 				if cmd == '/setname' and arg:
 					cfg['user_name'] = arg
 					save_config(cfg)
-					print(f"{ASSISTANT_NAME}: 알겠습니다. 이제 {arg}님이라고 부를게요.")
+					print(f"{ASSISTANT_NAME}: ?�겠?�니?? ?�제 {arg}?�이?�고 부를게??")
 					continue
 				if cmd == '/name':
 					if cfg.get('user_name'):
-						print(f"{ASSISTANT_NAME}: 사용자 이름은 {cfg['user_name']} 입니다.")
+						print(f"{ASSISTANT_NAME}: ?�용???�름?� {cfg['user_name']} ?�니??")
 					else:
-						print(f"{ASSISTANT_NAME}: 사용자의 이름이 설정되어 있지 않습니다. '/setname 이름' 으로 설정하세요.")
+						print(f"{ASSISTANT_NAME}: ?�용?�의 ?�름???�정?�어 ?��? ?�습?�다. '/setname ?�름' ?�로 ?�정?�세??")
 					continue
 				if cmd == '/history':
 					if os.path.exists(HISTORY_PATH):
 						with open(HISTORY_PATH, 'r', encoding='utf-8') as f:
 							print(f.read())
 					else:
-						print(f"{ASSISTANT_NAME}: 대화 기록이 없습니다.")
+						print(f"{ASSISTANT_NAME}: ?�??기록???�습?�다.")
 					continue
 				if cmd == '/clear':
 					try:
 						open(HISTORY_PATH, 'w', encoding='utf-8').close()
-						print(f"{ASSISTANT_NAME}: 기록을 삭제했습니다.")
+						print(f"{ASSISTANT_NAME}: 기록????��?�습?�다.")
 					except Exception:
-						print(f"{ASSISTANT_NAME}: 기록 삭제에 실패했습니다.")
+						print(f"{ASSISTANT_NAME}: 기록 ??��???�패?�습?�다.")
 					continue
 				if cmd == '/help':
-					print('''사용 가능한 명령:
-	/setname 이름  - 당신의 이름을 저장합니다.
-	/name         - 저장된 이름 확인
-	/history      - 대화 기록 보기
-	/clear        - 대화 기록 삭제
-	/help         - 도움말
-	exit 또는 종료 - 종료''')
+					print('''?�용 가?�한 명령:
+	/setname ?�름  - ?�신???�름???�?�합?�다.
+	/name         - ?�?�된 ?�름 ?�인
+	/history      - ?�??기록 보기
+	/clear        - ?�??기록 ??��
+	/help         - ?��?�?
+	exit ?�는 종료 - 종료''')
 					continue
 			if prompt.lower() in ('exit', '종료'):
-				print('종료합니다.')
+				print('종료?�니??')
 				break
 
-			# OpenAI 사용 가능하면 우선 시도
+			# OpenAI ?�용 가?�하�??�선 ?�도
 			if _OPENAI_AVAILABLE and os.getenv('OPENAI_API_KEY'):
 				try:
 					out = call_openai(prompt)
 				except Exception as e:
-					out = f"OpenAI 호출 중 오류가 발생했습니다: {e}\n(fallback 응답을 제공합니다)\n" + fallback_response(prompt)
+					out = f"OpenAI ?�출 �??�류가 발생?�습?�다: {e}\n(fallback ?�답???�공?�니??\n" + fallback_response(prompt)
 			else:
 				out = fallback_response(prompt)
 
-			# 히스토리 저장
+			# ?�스?�리 ?�??
 			append_history('You', prompt)
 			append_history(ASSISTANT_NAME, out)
 
@@ -218,12 +218,12 @@ except Exception:
 
 
 	def run_test():
-		print('테스트 모드: 샘플 입력들로 동작을 확인합니다.')
+		print('?�스??모드: ?�플 ?�력?�로 ?�작???�인?�니??')
 		samples = [
-			'안녕',
-			'지금 몇 시야?',
-			'2+3*4 계산해줘',
-			'너의 이름은 뭐야?'
+			'?�녕',
+			'지�?�??�야?',
+			'2+3*4 계산?�줘',
+			'?�의 ?�름?� 뭐야?'
 		]
 		for s in samples:
 			print('\nYou:', s)
@@ -231,7 +231,7 @@ except Exception:
 				try:
 					out = call_openai(s)
 				except Exception as e:
-					out = f"OpenAI 오류: {e} — fallback 사용\n" + fallback_response(s)
+					out = f"OpenAI ?�류: {e} ??fallback ?�용\n" + fallback_response(s)
 			else:
 				out = fallback_response(s)
 			print('Assistant:', out)
@@ -240,7 +240,7 @@ except Exception:
 
 	def main():
 		parser = argparse.ArgumentParser()
-		parser.add_argument('--test', action='store_true', help='샘플 대화 실행 후 종료')
+		parser.add_argument('--test', action='store_true', help='?�플 ?�???�행 ??종료')
 		args = parser.parse_args()
 		if args.test:
 			run_test()

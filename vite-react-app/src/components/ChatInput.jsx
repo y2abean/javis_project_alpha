@@ -17,12 +17,12 @@ function ChatInput({ onSend }) {
                 <input
                     type="text"
                     className="chat-input"
-                    placeholder="Jarvis에게 메시지 보내기..."
+                    placeholder="NEURON?�게 메시지 보내�?.."
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                 />
                 <button type="submit" className="send-btn" disabled={!input.trim()}>
-                    전송
+                    ?�송
                 </button>
             </form>
         </div>

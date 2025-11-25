@@ -7,18 +7,18 @@ from chatbot import load_config, save_config, CONFIG_PATH
 
 def test_save_and_load_config(tmp_path, monkeypatch):
     # use a temp config path
-    orig = os.environ.get('JARVIS_CONFIG_PATH')
+    orig = os.environ.get('NEURON_CONFIG_PATH')
     try:
         # monkeypatch module-level CONFIG_PATH by writing to the real path, but we can also test save/load directly
-        cfg = {'user_name': '테스터', 'openai_api_key': 'sk-test'}
+        cfg = {'user_name': '?�스??, 'openai_api_key': 'sk-test'}
         save_config(cfg)
         loaded = load_config()
-        assert loaded.get('user_name') in ('테스터', '지용', '') or isinstance(loaded.get('user_name'), str)
+        assert loaded.get('user_name') in ('?�스??, '지??, '') or isinstance(loaded.get('user_name'), str)
         # ensure key exists
         assert 'openai_api_key' in loaded or True
     finally:
         if orig is not None:
-            os.environ['JARVIS_CONFIG_PATH'] = orig
+            os.environ['NEURON_CONFIG_PATH'] = orig
 
 
 def test_set_key_cli(monkeypatch, tmp_path):

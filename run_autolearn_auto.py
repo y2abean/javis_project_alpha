@@ -3,9 +3,9 @@ m = importlib.import_module('chatbot')
 log = []
 # example prompts to enqueue
 prompts = [
-    "자비스, 내일 날씨 알려줘",
-    "파이썬에서 리스트를 정렬하는 방법",
-    "서울에서 가볼만한 관광지 추천"
+    "?�비?? ?�일 ?�씨 ?�려�?,
+    "?�이?�에??리스?��? ?�렬?�는 방법",
+    "?�울?�서 가볼만??관광�? 추천"
 ]
 added = []
 for p in prompts:
