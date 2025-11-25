@@ -1,25 +1,28 @@
 import React, { useEffect, useRef } from 'react';
+import './ChatWindow.css';
 
 function ChatWindow({ messages }) {
-    const bottomRef = useRef(null);
+    const messagesEndRef = useRef(null);
 
-    useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(scrollToBottom, [messages]);
 
     return (
         <div className="chat-window">
             {messages.map((msg, index) => (
                 <div key={index} className={`message ${msg.sender}`}>
-                    <div className="message-sender">
+                    <div className="message-header">
                         {msg.sender === 'user' ? 'You' : 'NEURON'}
                     </div>
-                    <div className="message-bubble">
+                    <div className="message-content">
                         {msg.text}
                     </div>
                 </div>
             ))}
-            <div ref={bottomRef} />
+            <div ref={messagesEndRef} />
         </div>
     );
 }

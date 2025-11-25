@@ -6,6 +6,7 @@ __pycache__/
 env/
 venv/
 build/
+neuron_config.json
 dist/
 *.egg-info/
 *.egg
@@ -13,4 +14,3 @@ dist/
 .env
 jarvis_history.txt
 jarvis_learning_queue.jsonl
-
