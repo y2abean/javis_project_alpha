@@ -1,38 +1,3 @@
-# Jarvis (로컬 복사)
-
-이 저장소는 사용자의 로컬 프로젝트를 GitHub로 옮기기 위한 준비본입니다.
-
-주요 파일
-- `push_to_github.ps1` — PowerShell로 실행 가능한 푸시 도우미 스크립트입니다. 원격 URL을 인자로 받아 `.git` 초기화, `.gitignore` 생성, 커밋, 원격 추가 및 푸시를 자동으로 수행합니다.
-- `.devcontainer/devcontainer.json` — (선택) GitHub Codespaces / VS Code Remote - Containers용 기본 설정입니다.
-
-로컬에서 Git으로 푸시하는 방법
-1. Git이 설치되어 있는지 확인하세요: `git --version`
-2. PowerShell에서 이 저장소 루트로 이동한 뒤 스크립트를 실행합니다:
-
-```powershell
-Set-Location 'C:\Users\User\Downloads\jarvis_package'
-.\push_to_github.ps1 -RemoteUrl 'https://github.com/y2abean/javis' -CommitMessage 'Initial import'
-```
-
-문제가 발생하면 터미널 출력 전체를 복사해서 공유해 주세요. 권한 문제(403)는 포크 → PR 방식으로 해결할 수 있습니다.
-
-GitHub Codespaces 열기
-1. 코드를 원격(예: `https://github.com/<your-username>/javis`)에 푸시합니다.
-2. GitHub에서 리포지토리 페이지로 가서 `Code` → `Open with Codespaces` 또는 `Codespaces` 탭에서 새 Codespace를 만드세요.
-
-추가 도움이나 `.devcontainer` 맞춤 구성이 필요하면 알려 주세요.
-# 간단한 ChatGPT 스타일 챗봇
-
-이 저장소에는 로컬에서 실행할 수 있는 간단한 ChatGPT 스타일 챗봇 예제가 있습니다.
-
-주요 파일
-- `chatbot.py`: REPL로 동작하는 챗봇. OpenAI API 키가 설정되어 있고 `openai` 패키지가 설치되어 있으면 실제 OpenAI Chat API를 사용합니다. 그렇지 않으면 간단한 규칙 기반 응답을 제공합니다.
-
-사용법
-
-1. (선택) OpenAI 연동을 사용하려면 `OPENAI_API_KEY` 환경변수를 설정하세요.
-
    # 간단한 ChatGPT 스타일 챗봇 (자비스)
 
    이 저장소는 터미널에서 구동되는 개인 비서 스타일의 챗봇 예제입니다.
