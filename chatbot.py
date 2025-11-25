@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
+개인 비서 '자비스' (간단한 ChatGPT 스타일 챗봇)
 
+기능 요약:
+- 규칙 기반 응답 및 선택적 OpenAI 통합
+- 명령: `/setname 이름`, `/name`, `/history`, `/clear`, `/help`, `exit`
+- 대화 히스토리 저장: `jarvis_history.txt` (타임스탬프 포함)
+- 설정 저장: `jarvis_config.json`
 
 """
 
@@ -50,11 +56,12 @@ except Exception:
     openai = None
     _OPENAI_AVAILABLE = False
 
-ASSISTANT_NAME = "뉴런"
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'NEURON_config.json')
-HISTORY_PATH = os.path.join(os.path.dirname(__file__), 'NEURON_history.txt')
-KNOWLEDGE_PATH = os.path.join(os.path.dirname(__file__), 'NEURON_knowledge.json')
-QUEUE_PATH = os.path.join(os.path.dirname(__file__), 'NEURON_learning_queue.jsonl')
+# 파일 경로 / 기본값
+ASSISTANT_NAME = "자비스"
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'jarvis_config.json')
+HISTORY_PATH = os.path.join(os.path.dirname(__file__), 'jarvis_history.txt')
+KNOWLEDGE_PATH = os.path.join(os.path.dirname(__file__), 'jarvis_knowledge.json')
+QUEUE_PATH = os.path.join(os.path.dirname(__file__), 'jarvis_learning_queue.jsonl')
 
 
 def load_config():
@@ -182,7 +189,7 @@ def process_learning_queue(max_items: int = 5, dry_run: bool = False) -> int:
             continue
         try:
             # ask OpenAI for a concise answer
-            answer_prompt = f"뜝럥졾뜝럥 슣돳쎌맄쎈즵뜝룞삕슣돢뙴삕뜝룞삕 쎈뇲쎄땀뺣돍삕쎌쓨뜝럥뉐뜝럥쐿뜝럥쎈닱섃뫁렰뜝럥깓싲쨪삕:\n{prompt}\n뜝럥:\n"
+            answer_prompt = f"다음 질문에 대해 짧고 친절한 한국어 답변을 작성해줘:\n{prompt}\n답변:\n"
             ans = call_openai(answer_prompt)
             if ans:
                 if not dry_run:
@@ -191,6 +198,7 @@ def process_learning_queue(max_items: int = 5, dry_run: bool = False) -> int:
             else:
                 remaining.append(it)
         except Exception:
+            logging.exception('학습 처리 중 오류')
             remaining.append(it)
 
     # write back remaining
@@ -212,6 +220,7 @@ def _derive_key(password: str, salt: bytes) -> bytes:
 
 def encrypt_api_key(key_str: str, password: str) -> str:
     if not _CRYPTO_AVAILABLE:
+        raise RuntimeError('cryptography 패키지가 필요합니다.')
     salt = os.urandom(16)
     k = _derive_key(password, salt)
     f = Fernet(k)
@@ -223,6 +232,7 @@ def encrypt_api_key(key_str: str, password: str) -> str:
 
 def decrypt_api_key(payload: str, password: str) -> str:
     if not _CRYPTO_AVAILABLE:
+        raise RuntimeError('cryptography 패키지가 필요합니다.')
     try:
         salt_b64, token = payload.split('::', 1)
         salt = base64.urlsafe_b64decode(salt_b64.encode())
@@ -264,7 +274,9 @@ def call_openai(prompt):
         except Exception:
             pass
     if not key:
+        raise RuntimeError("OPENAI_API_KEY 환경변수가 설정되어 있지 않습니다.")
     if not _OPENAI_AVAILABLE:
+        raise RuntimeError("openai 패키지가 설치되어 있지 않습니다. `pip install openai`를 실행하세요.")
     # Prefer new openai v1+ client if available, otherwise fall back to older API
     messages = [{"role": "user", "content": prompt}]
     start = time.time()
@@ -294,6 +306,7 @@ def call_openai(prompt):
         except Exception as e:
             # if authentication error (invalid key), disable auto_learn to avoid repeated charges
             msg = str(e)
+            logging.exception('OpenAI (v1+) API 호출 실패, 시도 중단')
             try:
                 if 'invalid_api_key' in msg or 'Incorrect API key' in msg or 'AuthenticationError' in repr(e):
                     cfg = load_config()
@@ -319,6 +332,7 @@ def call_openai(prompt):
             return content
         except Exception as e:
             msg = str(e)
+            logging.exception('OpenAI API 호출 실패')
             try:
                 if 'invalid_api_key' in msg or 'Incorrect API key' in msg or 'AuthenticationError' in repr(e):
                     cfg = load_config()
@@ -353,6 +367,7 @@ def get_response(prompt: str) -> str:
             try:
                 out = call_openai(prompt)
             except Exception as e:
+                logging.warning('OpenAI 호출 실패, fallback 사용: %s', e)
                 out = fallback_response(prompt)
         else:
             out = fallback_response(prompt)
@@ -364,6 +379,7 @@ def get_response(prompt: str) -> str:
             # ensure out is a string
             append_history(ASSISTANT_NAME, out if isinstance(out, str) else str(out))
         except Exception:
+            logging.exception('히스토리 쓰기 실패')
 
 
 def check_openai_key() -> tuple[bool, str]:
@@ -394,14 +410,17 @@ def learn_from_url(url: str, max_pairs: int = 5) -> int:
     Requires requests and BeautifulSoup installed and OpenAI configured.
     """
     if not _WEBREQ_AVAILABLE:
+        raise RuntimeError('웹 요청 기능을 사용하려면 requests 및 beautifulsoup4 패키지가 필요합니다.')
     ok, src = check_openai_key()
     if not ok or not _OPENAI_AVAILABLE:
+        raise RuntimeError('온라인 학습에는 OpenAI API 키와 openai 패키지가 필요합니다.')
 
     # fetch page
     try:
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
     except Exception as e:
+        raise RuntimeError(f'URL을 가져오는 중 오류: {e}')
 
     # extract text
     try:
@@ -415,17 +434,23 @@ def learn_from_url(url: str, max_pairs: int = 5) -> int:
             body = doc.body
             text = body.get_text(separator=' ', strip=True) if body else doc.get_text(separator=' ', strip=True)
     except Exception as e:
+        raise RuntimeError(f'HTML 파싱 중 오류: {e}')
 
     if not text:
+        raise RuntimeError('추출된 텍스트가 없습니다.')
 
     # prepare a prompt for generating Q/A pairs
     prompt = (
+        f"다음 텍스트를 읽고 최대 {max_pairs}개의 간단한 질문-답변(Q/A) 쌍을 만들어줘."
+        " 각 질문은 사용자 질문 형태로, 각 답변은 짧고 명확하게 작성해줘."
+        " 출력은 JSON 배열 형식으로 [{\"q\":...,\"a\":...}, ...] 만 출력해줘.\n\n"
         + text[:20000]
     )
 
     try:
         out = call_openai(prompt)
     except Exception as e:
+        raise RuntimeError(f'OpenAI 호출 실패: {e}')
 
     # attempt to parse JSON from response
     items = []
@@ -461,6 +486,7 @@ def learn_from_url(url: str, max_pairs: int = 5) -> int:
 
 
 def safe_eval_math(expr):
+    # 간단하고 안전한 수식 평가: AST로 허용된 노드만 허용
     allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Constant,
                      ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod,
                      ast.USub, ast.UAdd, ast.Load, ast.FloorDiv)
@@ -469,6 +495,7 @@ def safe_eval_math(expr):
 
     for n in ast.walk(node):
         if not isinstance(n, allowed_nodes):
+            raise ValueError("허용되지 않는 연산입니다.")
     return eval(compile(node, '<string>', mode='eval'))
 
 
@@ -476,15 +503,29 @@ def fallback_response(prompt):
     cfg = load_config()
     user_name = cfg.get('user_name') or ''
     p = prompt.strip().lower()
+    if any(g in p for g in ["안녕", "안녕하세요", "ㅎㅇ"]):
         if user_name:
+            return f"안녕하세요, {user_name}님! 무엇을 도와드릴까요?"
+        return f"안녕하세요! 저는 {ASSISTANT_NAME}입니다. 무엇을 도와드릴까요?"
+    if "이름" in p:
         if user_name:
+            return f"{user_name}님, 저는 개인 비서 {ASSISTANT_NAME}입니다. 필요하신 작업을 알려주세요."
+        return f"저는 개인 비서 {ASSISTANT_NAME}입니다. 먼저 이름을 알려주시면 더 친근하게 부를게요. (/setname 이름)"
+    if "시간" in p or "몇 시" in p:
+        return f"지금 시간은 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} 입니다."
 
-        expr = re.sub(r"[쎈쨬쎈읈뜝-s:]*", "", prompt)
+    # 수학 계산 요청 감지: 숫자와 연산기호 포함
+    if re.search(r"[0-9]+\s*[-+*/%^]", p) or p.startswith("계산"):
+        # 수식만 추출해보기
+        expr = re.sub(r"[가-힣\s:]*", "", prompt)
         expr = expr.replace('^', '**')
         try:
             val = safe_eval_math(expr)
+            return f"계산 결과: {val}"
         except Exception:
+            return "죄송합니다. 계산을 해석하지 못했습니다. 예: 2+3*4"
 
+    # 기본 에코 / 안내
     # queue for potential autonomous learning
     try:
         cfg = load_config()
@@ -492,20 +533,28 @@ def fallback_response(prompt):
             # when auto_learn_confirm is True, we queue but require manual processing
             queued = queue_for_learning(prompt)
             if cfg.get('auto_learn_confirm', True):
+                return f"아직 학습이 제한적입니다. 입력하신 내용: {prompt}\n(학습 후보로 큐에 추가되었습니다)"
             # if no confirm, we still inform user that learning is scheduled
+            return f"아직 학습이 제한적입니다. 입력하신 내용: {prompt}\n(자동 학습이 활성화되어 있습니다 — 곧 학습됩니다)"
     except Exception:
+        logging.exception('queue_for_learning 실패')
+    return f"아직 학습이 제한적입니다. 입력하신 내용: {prompt}"
 
 
 def repl():
     cfg = load_config()
     user_name = cfg.get('user_name') or ''
+    print(f"{ASSISTANT_NAME}에 오신 것을 환영합니다. 종료하려면 'exit' 또는 '종료'를 입력하세요.")
+    print("도움말: /help 를 입력하세요.")
     while True:
         try:
             prompt = input('You: ').strip()
         except (EOFError, KeyboardInterrupt):
+            print('\n종료합니다.')
             break
         if not prompt:
             continue
+        # 명령어 처리
         if prompt.startswith('/'):
             parts = prompt.split(maxsplit=1)
             cmd = parts[0].lower()
@@ -513,31 +562,39 @@ def repl():
             if cmd == '/setname' and arg:
                 cfg['user_name'] = arg
                 save_config(cfg)
+                print(f"{ASSISTANT_NAME}: 알겠습니다. 이제 {arg}님이라고 부를게요.")
                 continue
             if cmd == '/name':
                 if cfg.get('user_name'):
+                    print(f"{ASSISTANT_NAME}: 사용자 이름은 {cfg['user_name']} 입니다.")
                 else:
+                    print(f"{ASSISTANT_NAME}: 사용자의 이름이 설정되어 있지 않습니다. '/setname 이름' 으로 설정하세요.")
                 continue
             if cmd == '/history':
                 if os.path.exists(HISTORY_PATH):
                     with open(HISTORY_PATH, 'r', encoding='utf-8') as f:
                         print(f.read())
                 else:
+                    print(f"{ASSISTANT_NAME}: 대화 기록이 없습니다.")
                 continue
             if cmd == '/teach':
-                # format: /teach 슣돳쎌맄쎈즵 => 뜝럥
+                # format: /teach 질문 => 답변
                 if arg and '=>' in arg:
                     q,a = arg.split('=>',1)
                     teach_pair(q.strip(), a.strip())
+                    print(f"{ASSISTANT_NAME}: 학습 완료했습니다. 질문: '{q.strip()}' -> 답변 저장됨")
                 else:
                     # interactive teach
-                    q = input('슣돳쎌맄쎈즵뜝럡꼤뜝럩뜝럡꽠쎈빝뜝 ').strip()
+                    q = input('질문을 입력하세요: ').strip()
                     if not q:
+                        print('취소됨.')
                         continue
-                    a = input('뜝럥뜝럡꼤뜝럩뜝럡꽠쎈빝뜝 ').strip()
+                    a = input('답변을 입력하세요: ').strip()
                     if not a:
+                        print('취소됨.')
                         continue
                     teach_pair(q, a)
+                    print(f"{ASSISTANT_NAME}: 학습 완료했습니다. 질문: '{q}' -> 답변 저장됨")
                 continue
             if cmd == '/autolearn':
                 # usage: /autolearn on|off|status|process|clear
@@ -546,49 +603,73 @@ def repl():
                 if sub == 'on':
                     cfg['auto_learn'] = True
                     save_config(cfg)
+                    print('자동 학습이 활성화되었습니다.')
                 elif sub == 'off':
                     cfg['auto_learn'] = False
                     save_config(cfg)
+                    print('자동 학습이 비활성화되었습니다.')
                 elif sub == 'status':
                     print(f"auto_learn={cfg.get('auto_learn', False)}, auto_learn_confirm={cfg.get('auto_learn_confirm', True)}")
                 elif sub == 'process':
                     n = process_learning_queue()
+                    print(f"처리된 학습 항목 수: {n}")
                 elif sub == 'clear':
                     _save_learning_queue([])
+                    print('학습 큐를 비웠습니다.')
                 else:
+                    print("사용법: /autolearn on|off|status|process|clear")
                 continue
             if cmd == '/learn-url' and arg:
                 try:
                     n = learn_from_url(arg)
+                    print(f"{ASSISTANT_NAME}: 온라인 학습 완료, 저장된 Q/A 쌍 수: {n}")
                 except Exception as e:
+                    print(f"학습 실패: {e}")
                 continue
             if cmd == '/check-key':
                 ok, src = check_openai_key()
                 if ok:
+                    print(f"OPENAI_API_KEY가 설정되어 있습니다. 출처: {src}")
                 else:
+                    print('OPENAI_API_KEY가 설정되어 있지 않습니다.')
                 continue
             if cmd == '/clear':
                 try:
                     open(HISTORY_PATH, 'w', encoding='utf-8').close()
+                    print(f"{ASSISTANT_NAME}: 기록을 삭제했습니다.")
                 except Exception:
+                    print(f"{ASSISTANT_NAME}: 기록 삭제에 실패했습니다.")
                 continue
             if cmd == '/help':
+                print('''사용 가능한 명령:
+/setname 이름  - 당신의 이름을 저장합니다.
+/name         - 저장된 이름 확인
+/history      - 대화 기록 보기
+/clear        - 대화 기록 삭제
+/help         - 도움말
+exit 또는 종료 - 종료''')
                 continue
             if cmd == '/teach':
-                # format: /teach 슣돳쎌맄쎈즵 => 뜝럥
+                # format: /teach 질문 => 답변
                 if arg and '=>' in arg:
                     q,a = arg.split('=>',1)
                     teach_pair(q.strip(), a.strip())
+                    print(f"{ASSISTANT_NAME}: 학습 완료했습니다. 질문: '{q.strip()}' -> 답변 저장됨")
                 else:
                     # interactive teach
-                    q = input('슣돳쎌맄쎈즵뜝럡꼤뜝럩뜝럡꽠쎈빝뜝 ').strip()
+                    q = input('질문을 입력하세요: ').strip()
                     if not q:
+                        print('취소됨.')
                         continue
-                    a = input('뜝럥뜝럡꼤뜝럩뜝럡꽠쎈빝뜝 ').strip()
+                    a = input('답변을 입력하세요: ').strip()
                     if not a:
+                        print('취소됨.')
                         continue
                     teach_pair(q, a)
+                    print(f"{ASSISTANT_NAME}: 학습 완료했습니다. 질문: '{q}' -> 답변 저장됨")
                 continue
+        if prompt.lower() in ('exit', '종료'):
+            print('종료합니다.')
             break
 
         # Get response (will consult knowledge base first, then OpenAI/fallback)
@@ -597,7 +678,12 @@ def repl():
 
 
 def run_test():
+    print('테스트 모드: 샘플 입력들로 동작을 확인합니다.')
     samples = [
+        '안녕',
+        '지금 몇 시야?',
+        '2+3*4 계산해줘',
+        '너의 이름은 뭐야?'
     ]
     for s in samples:
         print('\nYou:', s)
@@ -605,7 +691,7 @@ def run_test():
             try:
                 out = call_openai(s)
             except Exception as e:
-                out = f"OpenAI 뜝럥욅춯옚삕: {e} fallback 뜝럥울옙\n" + fallback_response(s)
+                out = f"OpenAI 오류: {e} — fallback 사용\n" + fallback_response(s)
         else:
             out = fallback_response(s)
         print('Assistant:', out)
@@ -614,11 +700,12 @@ def run_test():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--set-key', metavar='KEY', help='OPENAI API 뜝럥 뜝럥졾뜝럩젳뜝럡꽘뜝룞삕뜝 (쎈꽞뚯뼔) 뜝럥졾뜝럩젳 뜝럩뮝뜝럥럡뜝룞삕왿몾쑏뜝뜝럥맄뜝럥렡')
-    parser.add_argument('--secure-set-key', metavar='KEY', help='API 뜝럥 쎈롥뜝룞삕먮뛼뒙뜝쎌녃뱄퐢깙뜝럡돭뜝럥깓쎈빝뜝 뜝럥졾뜝럩젳 뜝럩뮝뜝럥럡뜝룞삕왿몾쑏뜝뜝럥맄뜝럥렡 (쎈롥뜝룞삕먲옙 뜝럡꼤뜝럩쎄껀쎌뒜쎈쐮뜝럥녑뜝럥돲')
-    parser.add_argument('--decrypt-config', action='store_true', help='쎈롥뜝룞삕먲옙쎄껀쎈폇쏉옙 뜝럥졾뜝럩젳 뜝럩뮝뜝럥럡API 뜝럥 쎌녃뱄퐢밧뜝럡돭쎈롥뜝띂눀뜝뜝럥돯뜝럥듿뜝럩뜝럥녑뜝럥돲)
-    parser.add_argument('--test', action='store_true', help='뜝럡꽣쏙옙뼲삕 뜝룞삕뜝럥춯뺤삕 뜝럥욃뜝럡꼤뚯빢삕')
+    parser.add_argument('--set-key', metavar='KEY', help='OPENAI API 키를 설정하고 (선택) 설정 파일에 저장합니다')
+    parser.add_argument('--secure-set-key', metavar='KEY', help='API 키를 암호로 보호해서 설정 파일에 저장합니다 (암호 입력을 요청합니다)')
+    parser.add_argument('--decrypt-config', action='store_true', help='암호화된 설정 파일의 API 키를 복호화하여 출력합니다')
+    parser.add_argument('--test', action='store_true', help='샘플 대화 실행 후 종료')
     args = parser.parse_args()
+    # --set-key를 사용하면 설정 파일에 키를 저장하고 현재 세션 ENV에도 적용
     if getattr(args, 'set_key', None):
         key = args.set_key
         cfg = load_config()
@@ -626,30 +713,36 @@ def main():
         save_config(cfg)
         # set for current session
         os.environ['OPENAI_API_KEY'] = key
+        print('OPENAI_API_KEY가 설정 파일에 저장되고 현재 세션에 적용되었습니다.')
         return
 
     if getattr(args, 'secure_set_key', None):
         key = args.secure_set_key
         if not _CRYPTO_AVAILABLE:
+            print('cryptography 패키지가 필요합니다. requirements.txt를 업데이트하고 설치하세요.')
             return
-        pwd = getpass.getpass('쎈롥뜝룞삕먮뜉삕륅옙뜝럡꼤뜝럩뜝럡꽠쎈빝뜝(쎌녃뱄퐢쏙옙뜝럥쐾: ')
+        pwd = getpass.getpass('암호를 입력하세요 (복구용): ')
         payload = encrypt_api_key(key, pwd)
         cfg = load_config()
         cfg['openai_api_key_encrypted'] = payload
         # remove plain key if present
         cfg.pop('openai_api_key', None)
         save_config(cfg)
+        print('암호화된 API 키가 설정 파일에 저장되었습니다.')
         return
 
     if getattr(args, 'decrypt_config', False):
         cfg = load_config()
         payload = cfg.get('openai_api_key_encrypted')
         if not payload:
+            print('암호화된 API 키가 설정 파일에 없습니다.')
             return
-        pwd = getpass.getpass('쎈롥뜝룞삕먮뜉삕륅옙뜝럡꼤뜝럩뜝럡꽠쎈빝뜝 ')
+        pwd = getpass.getpass('암호를 입력하세요: ')
         try:
             key = decrypt_api_key(payload, pwd)
+            print('복호화된 키:', key)
         except Exception:
+            print('복호화 실패: 암호가 틀리거나 데이터가 손상되었습니다.')
         return
 
     if args.test:
@@ -677,4 +770,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
