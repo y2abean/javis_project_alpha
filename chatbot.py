@@ -281,7 +281,7 @@ def call_gemini(prompt):
     start = time.time()
     try:
         genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(prompt)
         elapsed = time.time() - start
         logging.info('Gemini API call success (%.3fs)', elapsed)
