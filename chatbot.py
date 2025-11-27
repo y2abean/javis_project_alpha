@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-개인 비서 '자비스' (간단한 ChatGPT 스타일 챗봇)
+개인 비서 'NEURON' (Google Gemini 기반 챗봇)
 
 기능 요약:
-- 규칙 기반 응답 및 선택적 OpenAI 통합
+- 규칙 기반 응답 및 선택적 Google Gemini 통합
 - 명령: `/setname 이름`, `/name`, `/history`, `/clear`, `/help`, `exit`
-- 대화 히스토리 저장: `jarvis_history.txt` (타임스탬프 포함)
-- 설정 저장: `jarvis_config.json`
+- 대화 히스토리 저장: `neuron_history.txt` (타임스탬프 포함)
+- 설정 저장: `neuron_config.json`
 
 """
 
@@ -50,22 +50,22 @@ except Exception:
     _DOTENV_AVAILABLE = False
 
 try:
-    import openai
-    _OPENAI_AVAILABLE = True
+    import google.generativeai as genai
+    _GEMINI_AVAILABLE = True
 except Exception:
-    openai = None
-    _OPENAI_AVAILABLE = False
+    genai = None
+    _GEMINI_AVAILABLE = False
 
 # 파일 경로 / 기본값
-ASSISTANT_NAME = "자비스"
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'jarvis_config.json')
-HISTORY_PATH = os.path.join(os.path.dirname(__file__), 'jarvis_history.txt')
-KNOWLEDGE_PATH = os.path.join(os.path.dirname(__file__), 'jarvis_knowledge.json')
-QUEUE_PATH = os.path.join(os.path.dirname(__file__), 'jarvis_learning_queue.jsonl')
+ASSISTANT_NAME = "NEURON"
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'neuron_config.json')
+HISTORY_PATH = os.path.join(os.path.dirname(__file__), 'neuron_history.txt')
+KNOWLEDGE_PATH = os.path.join(os.path.dirname(__file__), 'neuron_knowledge.json')
+QUEUE_PATH = os.path.join(os.path.dirname(__file__), 'neuron_learning_queue.jsonl')
 
 
 def load_config():
-    # Returns a dict with at least 'user_name' and optional 'openai_api_key'
+    # Returns a dict with at least 'user_name'
     try:
         if os.path.exists(CONFIG_PATH):
             with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
@@ -169,7 +169,7 @@ def queue_for_learning(prompt: str):
 
 
 def process_learning_queue(max_items: int = 5, dry_run: bool = False) -> int:
-    """Process queued prompts: generate answers via OpenAI and save to knowledge.
+    """Process queued prompts: generate answers via Gemini and save to knowledge.
 
     Returns number of items processed (saved). If dry_run True, does not save, only returns count.
     """
@@ -188,9 +188,9 @@ def process_learning_queue(max_items: int = 5, dry_run: bool = False) -> int:
         if not prompt:
             continue
         try:
-            # ask OpenAI for a concise answer
+            # ask Gemini for a concise answer
             answer_prompt = f"다음 질문에 대해 짧고 친절한 한국어 답변을 작성해줘:\n{prompt}\n답변:\n"
-            ans = call_openai(answer_prompt)
+            ans = call_gemini(answer_prompt)
             if ans:
                 if not dry_run:
                     teach_pair(prompt, ans)
@@ -260,93 +260,60 @@ def append_history(role: str, text: str):
         pass
 
 
-def call_openai(prompt):
+def call_gemini(prompt):
     # priority: env var -> config file -> .env
-    key = os.getenv("OPENAI_API_KEY")
+    key = os.getenv("GEMINI_API_KEY")
     if not key:
         cfg = load_config()
-        key = cfg.get('openai_api_key') or cfg.get('api_key')
+        key = cfg.get('gemini_api_key') or cfg.get('api_key')
     if not key and _DOTENV_AVAILABLE:
         # attempt to load .env and retry
         try:
             load_dotenv()
-            key = os.getenv("OPENAI_API_KEY")
+            key = os.getenv("GEMINI_API_KEY")
         except Exception:
             pass
     if not key:
-        raise RuntimeError("OPENAI_API_KEY 환경변수가 설정되어 있지 않습니다.")
-    if not _OPENAI_AVAILABLE:
-        raise RuntimeError("openai 패키지가 설치되어 있지 않습니다. `pip install openai`를 실행하세요.")
-    # Prefer new openai v1+ client if available, otherwise fall back to older API
-    messages = [{"role": "user", "content": prompt}]
+        raise RuntimeError("GEMINI_API_KEY 환경변수가 설정되어 있지 않습니다.")
+    if not _GEMINI_AVAILABLE:
+        raise RuntimeError("google-generativeai 패키지가 설치되어 있지 않습니다. `pip install google-generativeai`를 실행하세요.")
+    
     start = time.time()
-    # New client: openai.OpenAI()
-    if hasattr(openai, 'OpenAI'):
+    try:
+        genai.configure(api_key=key)
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        response = model.generate_content(prompt)
+        elapsed = time.time() - start
+        logging.info('Gemini API call success (%.3fs)', elapsed)
+        
+        # Extract text from response
+        if hasattr(response, 'text'):
+            content = response.text
+        elif hasattr(response, 'parts'):
+            content = ''.join(part.text for part in response.parts)
+        else:
+            content = str(response)
+            
+        return content.strip() if isinstance(content, str) else str(content)
+    except Exception as e:
+        # if authentication error (invalid key), disable auto_learn to avoid repeated charges
+        msg = str(e)
+        logging.exception('Gemini API 호출 실패, 시도 중단')
         try:
-            client = openai.OpenAI(api_key=key)
-            # try chat completions endpoint
-            resp = client.chat.completions.create(model="gpt-3.5-turbo", messages=messages, max_tokens=512)
-            elapsed = time.time() - start
-            logging.info('OpenAI (v1+) call success (%.3fs)', elapsed)
-            # try to extract content from various shapes
-            try:
-                # expected: resp.choices[0].message.content
-                content = resp.choices[0].message.content
-            except Exception:
-                try:
-                    # maybe mapping-like
-                    content = resp.choices[0].message['content']
-                except Exception:
-                    try:
-                        # responses API fallbacks
-                        content = getattr(resp.choices[0], 'text', '')
-                    except Exception:
-                        content = str(resp)
-            return content.strip() if isinstance(content, str) else str(content)
-        except Exception as e:
-            # if authentication error (invalid key), disable auto_learn to avoid repeated charges
-            msg = str(e)
-            logging.exception('OpenAI (v1+) API 호출 실패, 시도 중단')
-            try:
-                if 'invalid_api_key' in msg or 'Incorrect API key' in msg or 'AuthenticationError' in repr(e):
-                    cfg = load_config()
-                    cfg['openai_api_key_valid'] = False
-                    # disable autonomous processing to be safe
-                    cfg['auto_learn'] = False
-                    save_config(cfg)
-                    logging.warning('Invalid OpenAI API key detected; auto_learn disabled in config')
-            except Exception:
-                logging.exception('Failed to disable auto_learn after auth error')
-            raise
-    else:
-        # older client
-        try:
-            openai.api_key = key
-            resp = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages, max_tokens=512)
-            elapsed = time.time() - start
-            logging.info('OpenAI (legacy) call success (%.3fs)', elapsed)
-            try:
-                content = resp.choices[0].message.content.strip()
-            except Exception:
-                content = getattr(resp.choices[0], 'text', '') or str(resp)
-            return content
-        except Exception as e:
-            msg = str(e)
-            logging.exception('OpenAI API 호출 실패')
-            try:
-                if 'invalid_api_key' in msg or 'Incorrect API key' in msg or 'AuthenticationError' in repr(e):
-                    cfg = load_config()
-                    cfg['openai_api_key_valid'] = False
-                    cfg['auto_learn'] = False
-                    save_config(cfg)
-                    logging.warning('Invalid OpenAI API key detected; auto_learn disabled in config')
-            except Exception:
-                logging.exception('Failed to disable auto_learn after auth error')
-            raise
+            if 'invalid' in msg.lower() or 'api_key' in msg.lower() or 'authentication' in msg.lower():
+                cfg = load_config()
+                cfg['gemini_api_key_valid'] = False
+                # disable autonomous processing to be safe
+                cfg['auto_learn'] = False
+                save_config(cfg)
+                logging.warning('Invalid Gemini API key detected; auto_learn disabled in config')
+        except Exception:
+            logging.exception('Failed to disable auto_learn after auth error')
+        raise
 
 
 def get_response(prompt: str) -> str:
-    """Central entrypoint: try OpenAI (if configured) else fallback.
+    """Central entrypoint: try Gemini (if configured) else fallback.
 
     This function also appends to history and returns the assistant text.
     """
@@ -362,12 +329,12 @@ def get_response(prompt: str) -> str:
 
         # (moved helper functions to top-level)
 
-        # 2) Try OpenAI if configured
-        if _OPENAI_AVAILABLE and (os.getenv('OPENAI_API_KEY') or load_config().get('openai_api_key')):
+        # 2) Try Gemini if configured
+        if _GEMINI_AVAILABLE and (os.getenv('GEMINI_API_KEY') or load_config().get('gemini_api_key')):
             try:
-                out = call_openai(prompt)
+                out = call_gemini(prompt)
             except Exception as e:
-                logging.warning('OpenAI 호출 실패, fallback 사용: %s', e)
+                logging.warning('Gemini 호출 실패, fallback 사용: %s', e)
                 out = fallback_response(prompt)
         else:
             out = fallback_response(prompt)
@@ -382,21 +349,21 @@ def get_response(prompt: str) -> str:
             logging.exception('히스토리 쓰기 실패')
 
 
-def check_openai_key() -> tuple[bool, str]:
-    """Check for an OpenAI API key in environment or config. Returns (present, source)."""
-    key = os.getenv('OPENAI_API_KEY')
+def check_gemini_key() -> tuple[bool, str]:
+    """Check for a Gemini API key in environment or config. Returns (present, source)."""
+    key = os.getenv('GEMINI_API_KEY')
     if key:
         return True, 'env'
     cfg = load_config()
-    if cfg.get('openai_api_key'):
+    if cfg.get('gemini_api_key'):
         return True, 'config'
-    if cfg.get('openai_api_key_encrypted'):
+    if cfg.get('gemini_api_key_encrypted'):
         return True, 'config_encrypted'
     # attempt .env if available
     if _DOTENV_AVAILABLE:
         try:
             load_dotenv()
-            if os.getenv('OPENAI_API_KEY'):
+            if os.getenv('GEMINI_API_KEY'):
                 return True, '.env'
         except Exception:
             pass
@@ -404,16 +371,16 @@ def check_openai_key() -> tuple[bool, str]:
 
 
 def learn_from_url(url: str, max_pairs: int = 5) -> int:
-    """Fetch URL, extract main text, ask OpenAI to generate Q/A pairs, store them via teach_pair.
+    """Fetch URL, extract main text, ask Gemini to generate Q/A pairs, store them via teach_pair.
 
     Returns the number of Q/A pairs saved.
-    Requires requests and BeautifulSoup installed and OpenAI configured.
+    Requires requests and BeautifulSoup installed and Gemini configured.
     """
     if not _WEBREQ_AVAILABLE:
         raise RuntimeError('웹 요청 기능을 사용하려면 requests 및 beautifulsoup4 패키지가 필요합니다.')
-    ok, src = check_openai_key()
-    if not ok or not _OPENAI_AVAILABLE:
-        raise RuntimeError('온라인 학습에는 OpenAI API 키와 openai 패키지가 필요합니다.')
+    ok, src = check_gemini_key()
+    if not ok or not _GEMINI_AVAILABLE:
+        raise RuntimeError('온라인 학습에는 Gemini API 키와 google-generativeai 패키지가 필요합니다.')
 
     # fetch page
     try:
@@ -448,9 +415,9 @@ def learn_from_url(url: str, max_pairs: int = 5) -> int:
     )
 
     try:
-        out = call_openai(prompt)
+        out = call_gemini(prompt)
     except Exception as e:
-        raise RuntimeError(f'OpenAI 호출 실패: {e}')
+        raise RuntimeError(f'Gemini 호출 실패: {e}')
 
     # attempt to parse JSON from response
     items = []
@@ -627,11 +594,11 @@ def repl():
                     print(f"학습 실패: {e}")
                 continue
             if cmd == '/check-key':
-                ok, src = check_openai_key()
+                ok, src = check_gemini_key()
                 if ok:
-                    print(f"OPENAI_API_KEY가 설정되어 있습니다. 출처: {src}")
+                    print(f"GEMINI_API_KEY가 설정되어 있습니다. 출처: {src}")
                 else:
-                    print('OPENAI_API_KEY가 설정되어 있지 않습니다.')
+                    print('GEMINI_API_KEY가 설정되어 있지 않습니다.')
                 continue
             if cmd == '/clear':
                 try:
@@ -672,7 +639,7 @@ exit 또는 종료 - 종료''')
             print('종료합니다.')
             break
 
-        # Get response (will consult knowledge base first, then OpenAI/fallback)
+        # Get response (will consult knowledge base first, then Gemini/fallback)
         out = get_response(prompt)
         print(f'\n{ASSISTANT_NAME}:', out, '\n')
 
@@ -687,11 +654,11 @@ def run_test():
     ]
     for s in samples:
         print('\nYou:', s)
-        if _OPENAI_AVAILABLE and os.getenv('OPENAI_API_KEY'):
+        if _GEMINI_AVAILABLE and os.getenv('GEMINI_API_KEY'):
             try:
-                out = call_openai(s)
+                out = call_gemini(s)
             except Exception as e:
-                out = f"OpenAI 오류: {e} — fallback 사용\n" + fallback_response(s)
+                out = f"Gemini 오류: {e} — fallback 사용\n" + fallback_response(s)
         else:
             out = fallback_response(s)
         print('Assistant:', out)
@@ -700,7 +667,7 @@ def run_test():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--set-key', metavar='KEY', help='OPENAI API 키를 설정하고 (선택) 설정 파일에 저장합니다')
+    parser.add_argument('--set-key', metavar='KEY', help='GEMINI API 키를 설정하고 (선택) 설정 파일에 저장합니다')
     parser.add_argument('--secure-set-key', metavar='KEY', help='API 키를 암호로 보호해서 설정 파일에 저장합니다 (암호 입력을 요청합니다)')
     parser.add_argument('--decrypt-config', action='store_true', help='암호화된 설정 파일의 API 키를 복호화하여 출력합니다')
     parser.add_argument('--test', action='store_true', help='샘플 대화 실행 후 종료')
@@ -709,11 +676,11 @@ def main():
     if getattr(args, 'set_key', None):
         key = args.set_key
         cfg = load_config()
-        cfg['openai_api_key'] = key
+        cfg['gemini_api_key'] = key
         save_config(cfg)
         # set for current session
-        os.environ['OPENAI_API_KEY'] = key
-        print('OPENAI_API_KEY가 설정 파일에 저장되고 현재 세션에 적용되었습니다.')
+        os.environ['GEMINI_API_KEY'] = key
+        print('GEMINI_API_KEY가 설정 파일에 저장되고 현재 세션에 적용되었습니다.')
         return
 
     if getattr(args, 'secure_set_key', None):
@@ -724,16 +691,16 @@ def main():
         pwd = getpass.getpass('암호를 입력하세요 (복구용): ')
         payload = encrypt_api_key(key, pwd)
         cfg = load_config()
-        cfg['openai_api_key_encrypted'] = payload
+        cfg['gemini_api_key_encrypted'] = payload
         # remove plain key if present
-        cfg.pop('openai_api_key', None)
+        cfg.pop('gemini_api_key', None)
         save_config(cfg)
         print('암호화된 API 키가 설정 파일에 저장되었습니다.')
         return
 
     if getattr(args, 'decrypt_config', False):
         cfg = load_config()
-        payload = cfg.get('openai_api_key_encrypted')
+        payload = cfg.get('gemini_api_key_encrypted')
         if not payload:
             print('암호화된 API 키가 설정 파일에 없습니다.')
             return

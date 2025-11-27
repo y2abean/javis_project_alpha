@@ -1,6 +1,6 @@
 # PyInstaller를 이용해 GUI 앱 단일 exe로 빌드하는 스크립트
 param(
-    [string]$Name = "JarvisChatbot",
+    [string]$Name = "NeuronChatbot",
     [string]$Entry = "gui_chatbot.py",
     [string]$Icon = "",
     [switch]$IncludeData
@@ -8,11 +8,11 @@ param(
 
 py -3 -m pip install --upgrade pyinstaller | Out-Null
 
-$args = @('--onefile','--name', $Name)
+$args = @('--onefile', '--name', $Name)
 if ($Icon -ne '') { $args += @('--icon', $Icon) }
 if ($IncludeData) {
-    $cfg = Join-Path (Get-Location) 'jarvis_config.json'
-    $hist = Join-Path (Get-Location) 'jarvis_history.txt'
+    $cfg = Join-Path (Get-Location) 'neuron_config.json'
+    $hist = Join-Path (Get-Location) 'neuron_history.txt'
     if (Test-Path $cfg) { $args += @('--add-data', "$cfg;.") }
     if (Test-Path $hist) { $args += @('--add-data', "$hist;.") }
 }
@@ -22,6 +22,7 @@ py -3 -m PyInstaller @args
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "빌드 성공: dist\$Name.exe"
-} else {
+}
+else {
     Write-Host "빌드 실패"
 }

@@ -1,11 +1,12 @@
 :root {
   --bg-color: #0f172a;
   --chat-bg: #1e293b;
-  --primary-color: #3b82f6;
-  --primary-hover: #2563eb;
-  --text-color: #f8fafc;
-  --text-secondary: #94a3b8;
-  --bubble-user: #3b82f6;
+  --primary-color: #8b5cf6;
+  /* Violet for Neuron */
+  --primary-hover: #7c3aed;
+  --text-color: #ffffff;
+  --text-secondary: #cbd5e1;
+  --bubble-user: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
   --bubble-bot: #334155;
   --border-color: #334155;
   --shadow-color: rgba(0, 0, 0, 0.3);

@@ -1,14 +1,21 @@
 import React, { useState } from 'react';
 import './ChatInput.css';
 
-function ChatInput({ onSendMessage }) {
+function ChatInput({ onSendMessage, disabled }) {
     const [message, setMessage] = useState('');
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (message.trim()) {
+        if (message.trim() && !disabled) {
             onSendMessage(message);
             setMessage('');
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit(e);
         }
     };
 
@@ -18,10 +25,14 @@ function ChatInput({ onSendMessage }) {
                 <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     placeholder="NEURON에게 메시지 보내기..."
                     rows="3"
+                    disabled={disabled}
                 />
-                <button type="submit">전송</button>
+                <button type="submit" disabled={disabled}>
+                    {disabled ? '전송 중...' : '전송'}
+                </button>
             </div>
         </form>
     );

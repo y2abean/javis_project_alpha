@@ -3,10 +3,10 @@ import importlib, traceback, json, sys
 log = []
 try:
     m = importlib.import_module('chatbot')
-    ok, src = m.check_openai_key()
-    log.append({'check_openai_key': {'ok': ok, 'source': src}})
+    ok, src = m.check_gemini_key()
+    log.append({'check_gemini_key': {'ok': ok, 'source': src}})
     if not ok:
-        log.append({'note': 'No OpenAI API key found; aborting process_learning_queue.'})
+        log.append({'note': 'No Gemini API key found; aborting process_learning_queue.'})
     else:
         try:
             n = m.process_learning_queue()
