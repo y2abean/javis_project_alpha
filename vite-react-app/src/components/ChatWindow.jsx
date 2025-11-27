@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import './ChatWindow.css';
 
+import ReactMarkdown from 'react-markdown';
+
 function ChatWindow({ messages }) {
     const messagesEndRef = useRef(null);
 
@@ -18,7 +20,7 @@ function ChatWindow({ messages }) {
                         {msg.sender === 'user' ? 'You' : 'NEURON'}
                     </div>
                     <div className="message-content">
-                        {msg.text}
+                        <ReactMarkdown>{msg.text}</ReactMarkdown>
                     </div>
                 </div>
             ))}

@@ -41,7 +41,6 @@
     display: inline-block;
     width: fit-content;
     max-width: 70%;
-    min-width: 100px;
     padding: 1rem 1.5rem;
     border-radius: 1rem;
     background: var(--bubble-bot);
@@ -49,6 +48,7 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: left;
     word-wrap: break-word;
+    overflow-wrap: break-word;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -56,4 +56,54 @@
     background: var(--bubble-user);
     color: white;
     border: none;
+}
+
+/* Markdown Styles */
+.message-content p {
+    margin: 0.5rem 0;
+}
+
+.message-content p:first-child {
+    margin-top: 0;
+}
+
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+
+.message-content ul,
+.message-content ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.message-content li {
+    margin: 0.25rem 0;
+}
+
+.message-content strong {
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.message-content code {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.message-content pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+}
+
+.message-content pre code {
+    background: transparent;
+    padding: 0;
+    color: #e2e8f0;
 }

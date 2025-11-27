@@ -281,7 +281,7 @@ def call_gemini(prompt):
     start = time.time()
     try:
         genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         elapsed = time.time() - start
         logging.info('Gemini API call success (%.3fs)', elapsed)
@@ -335,7 +335,11 @@ def get_response(prompt: str) -> str:
                 out = call_gemini(prompt)
             except Exception as e:
                 logging.warning('Gemini 호출 실패, fallback 사용: %s', e)
-                out = fallback_response(prompt)
+                err_msg = str(e)
+                if '429' in err_msg or 'quota' in err_msg.lower() or 'exhausted' in err_msg.lower():
+                    out = f"죄송합니다. 현재 AI 모델의 사용량 한도(Quota)를 초과하여 답변을 드릴 수 없습니다. 잠시 후 다시 시도해주세요.\n(오류: {err_msg.splitlines()[0]})"
+                else:
+                    out = fallback_response(prompt)
         else:
             out = fallback_response(prompt)
         return out
