@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import Header from './components/Header';
 import ChatWindow from './components/ChatWindow';
@@ -7,8 +7,15 @@ import ChatInput from './components/ChatInput';
 const API_URL = 'http://localhost:5000';
 
 function App() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    const savedMessages = localStorage.getItem('chat_history');
+    return savedMessages ? JSON.parse(savedMessages) : [];
+  });
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('chat_history', JSON.stringify(messages));
+  }, [messages]);
 
   const handleSendMessage = async (messageText) => {
     // 사용자 메시지 추가

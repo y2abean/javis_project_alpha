@@ -260,6 +260,52 @@ def append_history(role: str, text: str):
         pass
 
 
+def get_recent_history(limit=10):
+    """
+    neuron_history.txt에서 최근 대화 내역을 읽어옵니다.
+    Gemini API 형식에 맞게 변환하여 반환합니다.
+    """
+    if not os.path.exists(HISTORY_PATH):
+        logging.info("History file not found: %s", HISTORY_PATH)
+        return []
+
+    try:
+        with open(HISTORY_PATH, 'r', encoding='utf-8', errors='replace') as f:
+            lines = f.readlines()
+        
+        # 최근 N개 라인만 가져오기
+        recent_lines = lines[-limit:]
+        history = []
+        
+        for line in recent_lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Regex parsing: [Timestamp] [Role] Message
+            match = re.match(r'\[(.*?)\] \[(.*?)\] (.*)', line)
+            if not match:
+                continue
+            
+            _, role, message = match.groups()
+            
+            # Role 매핑
+            if role == 'You':
+                api_role = 'user'
+            elif role == 'NEURON':
+                api_role = 'model'
+            else:
+                continue
+            
+            history.append({'role': api_role, 'parts': [message]})
+        
+        logging.info("Loaded %d history items for context", len(history))
+        return history
+    except Exception as e:
+        logging.error(f"History reading failed: {e}")
+        return []
+
+
 def call_gemini(prompt):
     # priority: env var -> config file -> .env
     key = os.getenv("GEMINI_API_KEY")
@@ -282,7 +328,16 @@ def call_gemini(prompt):
     try:
         genai.configure(api_key=key)
         model = genai.GenerativeModel('gemini-2.5-flash')
-        response = model.generate_content(prompt)
+        
+        # 2. 대화 내역 가져오기
+        history = get_recent_history(limit=10)
+        
+        # 3. 현재 프롬프트 추가
+        history.append({'role': 'user', 'parts': [prompt]})
+        
+        # 4. API 호출 (generate_content with contents list)
+        response = model.generate_content(history)
+        
         elapsed = time.time() - start
         logging.info('Gemini API call success (%.3fs)', elapsed)
         
