@@ -4,8 +4,10 @@ import ChatWindow from './components/ChatWindow';
 import ChatInput from './components/ChatInput';
 import Sidebar from './components/Sidebar';
 
-// Use relative path. In dev, Vite proxy handles it. In prod, Flask serves it.
-const API_URL = '/chat';
+// Use Render backend for production, localhost for development
+const API_URL = import.meta.env.DEV
+  ? 'http://localhost:5000/chat'
+  : 'https://javis-project-alpha.onrender.com/chat';
 
 function App() {
   // Session state: array of { id, title, messages, date }
