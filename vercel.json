@@ -1,0 +1,26 @@
+{
+    "version": 2,
+    "builds": [
+        {
+            "src": "server.py",
+            "use": "@vercel/python"
+        },
+        {
+            "src": "vite-react-app/package.json",
+            "use": "@vercel/static-build",
+            "config": {
+                "distDir": "vite-react-app/dist"
+            }
+        }
+    ],
+    "routes": [
+        {
+            "src": "/chat",
+            "dest": "server.py"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "vite-react-app/dist/$1"
+        }
+    ]
+}
