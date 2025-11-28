@@ -79,24 +79,22 @@ function App() {
 
     const userMessage = { sender: 'user', text: messageText };
 
-    let updatedSessions = [];
-    setSessions(prev => {
-      updatedSessions = prev.map(session => {
-        if (session.id === currentSessionId) {
-          const newMessages = [...session.messages, userMessage];
-          const newTitle = session.messages.length === 0 ? messageText.slice(0, 30) : session.title;
-          return { ...session, messages: newMessages, title: newTitle };
-        }
-        return session;
-      });
-      return updatedSessions;
-    });
+    // Add user message
+    setSessions(prev => prev.map(session => {
+      if (session.id === currentSessionId) {
+        const newMessages = [...session.messages, userMessage];
+        const newTitle = session.messages.length === 0 ? messageText.slice(0, 30) : session.title;
+        return { ...session, messages: newMessages, title: newTitle };
+      }
+      return session;
+    }));
 
     setIsLoading(true);
 
     try {
-      const currentSession = updatedSessions.find(s => s.id === currentSessionId);
-      const history = currentSession ? currentSession.messages : [userMessage];
+      // Get current session for history
+      const currentSession = sessions.find(s => s.id === currentSessionId);
+      const history = currentSession ? [...currentSession.messages, userMessage] : [userMessage];
 
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -113,6 +111,7 @@ function App() {
       const data = await response.json();
       const botMessage = { sender: 'bot', text: data.response };
 
+      // Add bot response
       setSessions(prev => prev.map(session => {
         if (session.id === currentSessionId) {
           return { ...session, messages: [...session.messages, botMessage] };
