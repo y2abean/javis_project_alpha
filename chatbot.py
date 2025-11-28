@@ -332,15 +332,19 @@ def call_gemini(prompt, history_context=None):
         # 2. Use provided history context if available
         gemini_history = []
         if history_context:
+            # Convert frontend history format to Gemini format
             for msg in history_context:
                 role = 'user' if msg.get('sender') == 'user' else 'model'
                 gemini_history.append({'role': role, 'parts': [msg.get('text', '')]})
+            
+            # Check if the last message is already the current prompt
+            # If so, don't add it again (frontend already includes it)
+            if not gemini_history or gemini_history[-1].get('parts', [''])[0] != prompt:
+                gemini_history.append({'role': 'user', 'parts': [prompt]})
         else:
             # Fallback to file history (only if no context provided, though we prefer stateless)
             gemini_history = get_recent_history(limit=10)
-        
-        # 3. 현재 프롬프트 추가
-        gemini_history.append({'role': 'user', 'parts': [prompt]})
+            gemini_history.append({'role': 'user', 'parts': [prompt]})
         
         # 4. API 호출 (generate_content with contents list)
         response = model.generate_content(gemini_history)
