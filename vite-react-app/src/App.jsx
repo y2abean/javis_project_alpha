@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-import Header from './components/Header';
 import ChatWindow from './components/ChatWindow';
 import ChatInput from './components/ChatInput';
 import Sidebar from './components/Sidebar';
@@ -58,8 +57,6 @@ function App() {
     setSessions(prev => {
       const newSessions = prev.filter(s => s.id !== id);
       if (newSessions.length === 0) {
-        // If all deleted, create a new one immediately (handled by effect or manually)
-        // But better to handle here to avoid flicker
         setTimeout(createNewChat, 0);
         return [];
       }
@@ -78,7 +75,6 @@ function App() {
   const handleSendMessage = async (messageText) => {
     if (!currentSessionId) return;
 
-    // 1. Add user message locally
     const userMessage = { sender: 'user', text: messageText };
 
     let updatedSessions = [];
@@ -86,7 +82,6 @@ function App() {
       updatedSessions = prev.map(session => {
         if (session.id === currentSessionId) {
           const newMessages = [...session.messages, userMessage];
-          // Update title if it's the first message
           const newTitle = session.messages.length === 0 ? messageText.slice(0, 30) : session.title;
           return { ...session, messages: newMessages, title: newTitle };
         }
@@ -98,7 +93,6 @@ function App() {
     setIsLoading(true);
 
     try {
-      // Get the updated history for this session to send to backend
       const currentSession = updatedSessions.find(s => s.id === currentSessionId);
       const history = currentSession ? currentSession.messages : [userMessage];
 
@@ -107,7 +101,6 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        // Send history along with prompt
         body: JSON.stringify({ prompt: messageText, history: history }),
       });
 
@@ -118,7 +111,6 @@ function App() {
       const data = await response.json();
       const botMessage = { sender: 'bot', text: data.response };
 
-      // 2. Add bot response locally
       setSessions(prev => prev.map(session => {
         if (session.id === currentSessionId) {
           return { ...session, messages: [...session.messages, botMessage] };
@@ -144,7 +136,6 @@ function App() {
   };
 
   const currentMessages = getCurrentMessages();
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
@@ -166,7 +157,6 @@ function App() {
               <line x1="9" y1="3" x2="9" y2="21"></line>
             </svg>
           </button>
-          <Header />
         </div>
         <div className="chat-container">
           {currentMessages.length === 0 ? (

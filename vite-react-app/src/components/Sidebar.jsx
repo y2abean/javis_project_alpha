@@ -1,9 +1,11 @@
 import React from 'react';
 import './Sidebar.css';
+import Header from './Header';
 
 function Sidebar({ sessions, currentSessionId, onNewChat, onSelectSession, onDeleteSession }) {
     return (
         <div className="sidebar">
+            <Header />
             <button className="new-chat-btn" onClick={onNewChat}>
                 + New Chat
             </button>
