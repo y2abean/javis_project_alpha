@@ -13,8 +13,14 @@ app = Flask(__name__,
             static_folder='vite-react-app/dist',
             static_url_path='')
 
-# Enable CORS for local development and production domain
-CORS(app, resources={r"/chat": {"origins": ["http://localhost:5173", "https://projectneuron.cfd"]}})
+# Enable CORS - allow all origins for now, will be restricted later
+CORS(app, resources={
+    r"/chat": {
+        "origins": "*",  # Allow all origins initially
+        "methods": ["POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 # Serve React App
 @app.route('/')
@@ -22,8 +28,12 @@ def serve_react():
     return send_from_directory(app.static_folder, 'index.html')
 
 # API endpoint
-@app.route('/chat', methods=['POST'])
+@app.route('/chat', methods=['POST', 'OPTIONS'])
 def chat():
+    # Handle preflight request
+    if request.method == 'OPTIONS':
+        return '', 204
+        
     data = request.json
     prompt = data.get('prompt')
     history = data.get('history', [])  # Get history from frontend
@@ -35,6 +45,7 @@ def chat():
         response = get_response(prompt, history) # Pass history
         return jsonify({'response': response})
     except Exception as e:
+        print(f"Error in chat endpoint: {e}")  # Log for debugging
         return jsonify({'error': str(e)}), 500
 
 # Catch-all route to serve React for client-side routing
@@ -47,5 +58,6 @@ def serve_static(path):
     return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
-    print("Starting NEURON Backend Server on port 5000...")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    print(f"Starting NEURON Backend Server on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=False)  # debug=False for production
