@@ -4,7 +4,9 @@ import Header from './components/Header';
 import ChatWindow from './components/ChatWindow';
 import ChatInput from './components/ChatInput';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = import.meta.env.PROD
+  ? 'https://projectneuron.cfd'
+  : 'http://localhost:5000';
 
 function App() {
   const [messages, setMessages] = useState(() => {

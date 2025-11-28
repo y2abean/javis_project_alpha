@@ -9,7 +9,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from chatbot import get_response
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Enable CORS for local development and production domain
+CORS(app, resources={r"/chat": {"origins": ["http://localhost:5173", "https://projectneuron.cfd"]}})
 
 @app.route('/chat', methods=['POST'])
 def chat():
