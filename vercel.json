@@ -1,15 +1,22 @@
 {
-    "buildCommand": "cd vite-react-app && npm install && npm run build",
-    "outputDirectory": "vite-react-app/dist",
-    "framework": null,
-    "rewrites": [
+    "version": 2,
+    "builds": [
         {
-            "source": "/chat",
-            "destination": "/api/chat"
+            "src": "vite-react-app/package.json",
+            "use": "@vercel/static-build",
+            "config": {
+                "distDir": "dist"
+            }
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "/api/$1"
         },
         {
-            "source": "/(.*)",
-            "destination": "/index.html"
+            "src": "/(.*)",
+            "dest": "/vite-react-app/dist/$1"
         }
     ]
 }
