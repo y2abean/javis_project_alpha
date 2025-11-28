@@ -4,9 +4,10 @@ import Header from './components/Header';
 import ChatWindow from './components/ChatWindow';
 import ChatInput from './components/ChatInput';
 
+// Use relative path since frontend and backend are on same domain
 const API_URL = import.meta.env.PROD
-  ? 'https://projectneuron.cfd'
-  : 'http://localhost:5000';
+  ? '/chat'  // Production: same domain
+  : 'http://localhost:5000/chat';  // Development: separate ports
 
 function App() {
   const [messages, setMessages] = useState(() => {
@@ -26,7 +27,7 @@ function App() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/chat`, {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
