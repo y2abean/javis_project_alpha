@@ -26,12 +26,13 @@ def serve_react():
 def chat():
     data = request.json
     prompt = data.get('prompt')
+    history = data.get('history', [])  # Get history from frontend
     
     if not prompt:
         return jsonify({'error': 'No prompt provided'}), 400
     
     try:
-        response = get_response(prompt)
+        response = get_response(prompt, history) # Pass history
         return jsonify({'response': response})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -47,4 +48,4 @@ def serve_static(path):
 
 if __name__ == '__main__':
     print("Starting NEURON Backend Server on port 5000...")
-    app.run(port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

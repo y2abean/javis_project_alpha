@@ -27,11 +27,19 @@ function ChatInput({ onSendMessage, disabled }) {
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="NEURON에게 메시지 보내기..."
-                    rows="3"
+                    rows="1"
                     disabled={disabled}
+                    style={{ height: 'auto', minHeight: '24px', maxHeight: '200px' }}
+                    onInput={(e) => {
+                        e.target.style.height = 'auto';
+                        e.target.style.height = e.target.scrollHeight + 'px';
+                    }}
                 />
-                <button type="submit" disabled={disabled}>
-                    {disabled ? '전송 중...' : '전송'}
+                <button type="submit" disabled={disabled || !message.trim()} className="send-btn">
+                    <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
                 </button>
             </div>
         </form>

@@ -306,7 +306,7 @@ def get_recent_history(limit=10):
         return []
 
 
-def call_gemini(prompt):
+def call_gemini(prompt, history_context=None):
     # priority: env var -> config file -> .env
     key = os.getenv("GEMINI_API_KEY")
     if not key:
@@ -329,14 +329,21 @@ def call_gemini(prompt):
         genai.configure(api_key=key)
         model = genai.GenerativeModel('gemini-2.5-flash')
         
-        # 2. 대화 내역 가져오기
-        history = get_recent_history(limit=10)
+        # 2. Use provided history context if available
+        gemini_history = []
+        if history_context:
+            for msg in history_context:
+                role = 'user' if msg.get('sender') == 'user' else 'model'
+                gemini_history.append({'role': role, 'parts': [msg.get('text', '')]})
+        else:
+            # Fallback to file history (only if no context provided, though we prefer stateless)
+            gemini_history = get_recent_history(limit=10)
         
         # 3. 현재 프롬프트 추가
-        history.append({'role': 'user', 'parts': [prompt]})
+        gemini_history.append({'role': 'user', 'parts': [prompt]})
         
         # 4. API 호출 (generate_content with contents list)
-        response = model.generate_content(history)
+        response = model.generate_content(gemini_history)
         
         elapsed = time.time() - start
         logging.info('Gemini API call success (%.3fs)', elapsed)
@@ -360,34 +367,32 @@ def call_gemini(prompt):
                 cfg['gemini_api_key_valid'] = False
                 # disable autonomous processing to be safe
                 cfg['auto_learn'] = False
-                save_config(cfg)
+                # save_config(cfg) # Disable saving config in stateless mode to avoid write errors
                 logging.warning('Invalid Gemini API key detected; auto_learn disabled in config')
         except Exception:
             logging.exception('Failed to disable auto_learn after auth error')
         raise
 
 
-def get_response(prompt: str) -> str:
+def get_response(prompt: str, history: list = None) -> str:
     """Central entrypoint: try Gemini (if configured) else fallback.
-
-    This function also appends to history and returns the assistant text.
+    
+    Stateless mode: Uses `history` list passed from frontend.
     """
     # prefer runtime env variable presence OR saved key
     out = None
     try:
-        # 1) Local knowledge base lookup
-        k = find_knowledge(prompt)
-        if k:
-            out = k
-            return out
-
-
-        # (moved helper functions to top-level)
+        # 1) Local knowledge base lookup (Read-only is fine, but writing is bad)
+        # For now, we skip knowledge base to ensure pure statelessness or keep it read-only if file exists.
+        # k = find_knowledge(prompt) 
+        # if k:
+        #     out = k
+        #     return out
 
         # 2) Try Gemini if configured
         if _GEMINI_AVAILABLE and (os.getenv('GEMINI_API_KEY') or load_config().get('gemini_api_key')):
             try:
-                out = call_gemini(prompt)
+                out = call_gemini(prompt, history)
             except Exception as e:
                 logging.warning('Gemini 호출 실패, fallback 사용: %s', e)
                 err_msg = str(e)
@@ -399,13 +404,8 @@ def get_response(prompt: str) -> str:
             out = fallback_response(prompt)
         return out
     finally:
-        # always append history even if something raised earlier
-        try:
-            append_history('You', prompt)
-            # ensure out is a string
-            append_history(ASSISTANT_NAME, out if isinstance(out, str) else str(out))
-        except Exception:
-            logging.exception('히스토리 쓰기 실패')
+        # Disable file writing for stateless mode
+        pass
 
 
 def check_gemini_key() -> tuple[bool, str]:
