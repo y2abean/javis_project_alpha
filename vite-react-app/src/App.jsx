@@ -200,7 +200,36 @@ function App() {
   };
 
   const currentMessages = getCurrentMessages();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Initialize sidebar state based on screen width
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth > 768;
+    }
+    return true;
+  });
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleSessionSelect = (sessionId) => {
+    setCurrentSessionId(sessionId);
+    // Close sidebar on mobile when a chat is selected
+    if (window.innerWidth <= 768) {
+      setIsSidebarOpen(false);
+    }
+  };
 
   const [welcomeMessage, setWelcomeMessage] = useState('');
 
@@ -224,11 +253,31 @@ function App() {
         <Sidebar
           sessions={sessions}
           currentSessionId={currentSessionId}
-          onNewChat={createNewChat}
-          onSelectSession={setCurrentSessionId}
+          onNewChat={() => {
+            createNewChat();
+            if (window.innerWidth <= 768) setIsSidebarOpen(false);
+          }}
+          onSelectSession={handleSessionSelect}
           onDeleteSession={deleteSession}
         />
       </div>
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="mobile-overlay"
+          onClick={() => setIsSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 90,
+            display: window.innerWidth <= 768 ? 'block' : 'none'
+          }}
+        />
+      )}
       <div className="main-content">
         <div className="top-bar">
           <button className="toggle-sidebar-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)} title={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}>

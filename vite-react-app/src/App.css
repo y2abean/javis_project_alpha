@@ -110,3 +110,48 @@
     transform: translateY(0);
   }
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .app {
+    position: relative;
+  }
+
+  .sidebar-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 100;
+    width: 280px;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .sidebar-wrapper.closed {
+    transform: translateX(-100%);
+    width: 280px;
+  }
+
+  .main-content {
+    width: 100%;
+  }
+
+  .chat-container {
+    padding-top: 60px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .top-bar {
+    background: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .welcome-message h1 {
+    font-size: 2rem;
+  }
+
+  .welcome-message p {
+    font-size: 1rem;
+  }
+}
