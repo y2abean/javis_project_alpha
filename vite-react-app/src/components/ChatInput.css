@@ -36,7 +36,6 @@
     resize: none;
     outline: none;
     overflow-y: hidden;
-    /* Hidden by default, auto-grow handles it */
 }
 
 .input-container textarea::placeholder {
@@ -55,7 +54,6 @@
     justify-content: center;
     transition: all 0.2s;
     margin-bottom: 0.125rem;
-    /* Align with text baseline */
 }
 
 .send-btn:hover:not(:disabled) {
@@ -71,4 +69,11 @@
 .send-btn svg {
     width: 16px;
     height: 16px;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .chat-input {
+        padding: 0.75rem;
+    }
 }

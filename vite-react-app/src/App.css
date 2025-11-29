@@ -138,13 +138,18 @@
 
   .chat-container {
     padding-top: 60px;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-bottom: 0;
   }
 
   .top-bar {
     background: var(--bg-color);
     border-bottom: 1px solid var(--border-color);
+  }
+
+  .welcome-message {
+    padding: 1rem;
   }
 
   .welcome-message h1 {
