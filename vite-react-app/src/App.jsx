@@ -202,6 +202,22 @@ function App() {
   const currentMessages = getCurrentMessages();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+
+  useEffect(() => {
+    const messages = [
+      '\uC548\uB155\uD558\uC138\uC694!', // 안녕하세요!
+      '\uBC18\uAC11\uC2B5\uB2C8\uB2E4', // 반갑습니다
+      '\uBC25\uC740 \uBA39\uC5C8\uB098\uC694?', // 밥은 먹었나요?
+      '\uC81C\uAC00 \uD65C\uC57D\uD560 \uC2DC\uAC04\uC774\uAD70\uC694!', // 제가 활약할 시간이군요!
+      '\uBB34\uC5C7\uC744 \uB3C4\uC640\uB4DC\uB9B4\uAE4C\uC694?', // 무엇을 도와드릴까요?
+      '\uC624\uB298\uB3C4 \uC88B\uC740 \uD558\uB8E8 \uB418\uC138\uC694', // 오늘도 좋은 하루 되세요
+      '\uAE30\uB2E4\uB9AC\uACE0 \uC788\uC5C8\uC2B5\uB2C8\uB2E4' // 기다리고 있었습니다
+    ];
+    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+    setWelcomeMessage(randomMsg);
+  }, []);
+
   return (
     <div className={`app ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
       <div className={`sidebar-wrapper ${isSidebarOpen ? 'open' : 'closed'}`}>
@@ -225,7 +241,7 @@ function App() {
         <div className="chat-container">
           {currentMessages.length === 0 ? (
             <div className="welcome-message">
-              <h1>{'\uC548\uB155\uD558\uC138\uC694!'}</h1>
+              <h1>{welcomeMessage}</h1>
               <p>{'NEURON\uACFC \uB300\uD654\uB97C \uC2DC\uC791\uD558\uC138\uC694'}</p>
             </div>
           ) : (
