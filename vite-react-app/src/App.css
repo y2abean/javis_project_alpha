@@ -141,7 +141,8 @@
     padding-left: 0.5rem;
     padding-right: 0.5rem;
     padding-bottom: 0.5rem;
-    overflow-y: auto;
+    justify-content: space-around;
+    gap: 1rem;
   }
 
   .top-bar {
@@ -151,8 +152,12 @@
 
   .welcome-message {
     flex: none;
-    padding: 1.5rem 1rem 0.75rem 1rem;
-    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    text-align: center;
   }
 
   .welcome-message h1 {
