@@ -74,6 +74,10 @@
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
     .chat-input {
-        padding: 0.75rem;
+        padding: 0.5rem;
+    }
+
+    .input-container {
+        padding: 0.5rem;
     }
 }
