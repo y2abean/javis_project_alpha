@@ -12,13 +12,23 @@ const API_URL = import.meta.env.DEV
 function App() {
   // Session state: array of { id, title, messages, date }
   const [sessions, setSessions] = useState(() => {
-    const saved = localStorage.getItem('chat_sessions');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('chat_sessions');
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error('Failed to load sessions from localStorage:', error);
+      return [];
+    }
   });
 
   const [currentSessionId, setCurrentSessionId] = useState(() => {
-    const saved = localStorage.getItem('current_session_id');
-    return saved || null;
+    try {
+      const saved = localStorage.getItem('current_session_id');
+      return saved || null;
+    } catch (error) {
+      console.error('Failed to load currentSessionId from localStorage:', error);
+      return null;
+    }
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -27,20 +37,35 @@ function App() {
   useEffect(() => {
     if (sessions.length === 0) {
       createNewChat();
-    } else if (!currentSessionId) {
-      setCurrentSessionId(sessions[0].id);
+    } else {
+      // Ensure currentSessionId is valid
+      const isValidSession = sessions.some(s => s.id === currentSessionId);
+      if (!currentSessionId || !isValidSession) {
+        setCurrentSessionId(sessions[0].id);
+      }
     }
   }, []);
 
   // Persist sessions
   useEffect(() => {
-    localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+    try {
+      localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+    } catch (error) {
+      console.error('Failed to save sessions to localStorage:', error);
+      // Optional: Notify user that storage might be full
+    }
   }, [sessions]);
 
   // Persist current session ID
   useEffect(() => {
-    if (currentSessionId) {
-      localStorage.setItem('current_session_id', currentSessionId);
+    try {
+      if (currentSessionId) {
+        localStorage.setItem('current_session_id', currentSessionId);
+      } else {
+        localStorage.removeItem('current_session_id');
+      }
+    } catch (error) {
+      console.error('Failed to save currentSessionId to localStorage:', error);
     }
   }, [currentSessionId]);
 

@@ -327,7 +327,8 @@ def call_gemini(prompt, history_context=None):
     start = time.time()
     try:
         genai.configure(api_key=key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        system_instruction = "당신의 이름은 '뉴런(Neuron)'입니다. 당신은 사용자의 개인 비서로서 친절하고 정확하게 한국어로 답변해야 합니다."
+        model = genai.GenerativeModel('gemini-2.5-flash', system_instruction=system_instruction)
         
         # 2. Use provided history context if available
         gemini_history = []
