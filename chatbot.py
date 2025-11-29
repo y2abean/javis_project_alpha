@@ -306,7 +306,7 @@ def get_recent_history(limit=10):
         return []
 
 
-def call_gemini(prompt, history_context=None):
+def call_gemini(prompt, history_context=None, user_name=None):
     # priority: env var -> config file -> .env
     key = os.getenv("GEMINI_API_KEY")
     if not key:
@@ -328,6 +328,9 @@ def call_gemini(prompt, history_context=None):
     try:
         genai.configure(api_key=key)
         system_instruction = "당신의 이름은 '뉴런(Neuron)'입니다. 당신은 사용자의 개인 비서로서 친절하고 정확하게 한국어로 답변해야 합니다."
+        if user_name:
+            system_instruction += f" 사용자의 이름은 '{user_name}'입니다."
+        
         model = genai.GenerativeModel('gemini-2.5-flash', system_instruction=system_instruction)
         
         # 2. Use provided history context if available
@@ -379,7 +382,7 @@ def call_gemini(prompt, history_context=None):
         raise
 
 
-def get_response(prompt: str, history: list = None) -> str:
+def get_response(prompt: str, history: list = None, user_name: str = None) -> str:
     """Central entrypoint: try Gemini (if configured) else fallback.
     
     Stateless mode: Uses `history` list passed from frontend.
@@ -397,7 +400,7 @@ def get_response(prompt: str, history: list = None) -> str:
         # 2) Try Gemini if configured
         if _GEMINI_AVAILABLE and (os.getenv('GEMINI_API_KEY') or load_config().get('gemini_api_key')):
             try:
-                out = call_gemini(prompt, history)
+                out = call_gemini(prompt, history, user_name)
             except Exception as e:
                 logging.warning('Gemini 호출 실패, fallback 사용: %s', e)
                 err_msg = str(e)
@@ -729,6 +732,28 @@ def run_test():
         time.sleep(0.2)
 
 
+def start_background_learning():
+    """Starts the background learning thread if enabled in config."""
+    cfg = load_config()
+    # Force enable auto_learn for now as per user request, or respect config
+    # If config doesn't exist or auto_learn is not set, default to True for this session if desired
+    # But let's respect the file config.
+    if cfg.get('auto_learn', False) and not cfg.get('auto_learn_confirm', True):
+        def _autolearn_loop():
+            import time as _t
+            while True:
+                try:
+                    n = process_learning_queue()
+                    if n:
+                        logging.info('Autolearn processed %d items', n)
+                except Exception:
+                    logging.exception('Autolearn loop error')
+                _t.sleep(int(cfg.get('auto_learn_interval', 60)))
+        import threading as _thr
+        t = _thr.Thread(target=_autolearn_loop, daemon=True)
+        t.start()
+        logging.info("Background learning thread started.")
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--set-key', metavar='KEY', help='GEMINI API 키를 설정하고 (선택) 설정 파일에 저장합니다')
@@ -779,23 +804,8 @@ def main():
     if args.test:
         run_test()
         return
-    # start autolearn service if enabled and auto processing allowed
-    cfg = load_config()
-    if cfg.get('auto_learn', False) and not cfg.get('auto_learn_confirm', True):
-        # start a background thread to process the learning queue periodically
-        def _autolearn_loop():
-            import time as _t
-            while True:
-                try:
-                    n = process_learning_queue()
-                    if n:
-                        logging.info('Autolearn processed %d items', n)
-                except Exception:
-                    logging.exception('Autolearn loop error')
-                _t.sleep(int(cfg.get('auto_learn_interval', 60)))
-        import threading as _thr
-        t = _thr.Thread(target=_autolearn_loop, daemon=True)
-        t.start()
+    
+    start_background_learning()
     repl()
 
 

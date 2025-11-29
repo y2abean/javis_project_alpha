@@ -6,7 +6,7 @@ import os
 # Add current directory to path to import chatbot
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from chatbot import get_response
+from chatbot import get_response, start_background_learning
 
 # Configure Flask to serve React build files
 app = Flask(__name__, 
@@ -21,6 +21,9 @@ CORS(app, resources={
         "allow_headers": ["Content-Type"]
     }
 })
+
+# Start background learning thread
+start_background_learning()
 
 # Serve React App
 @app.route('/')
@@ -37,12 +40,13 @@ def chat():
     data = request.json
     prompt = data.get('prompt')
     history = data.get('history', [])  # Get history from frontend
+    user_name = data.get('userName') # Get userName from frontend
     
     if not prompt:
         return jsonify({'error': 'No prompt provided'}), 400
     
     try:
-        response = get_response(prompt, history) # Pass history
+        response = get_response(prompt, history, user_name) # Pass history and user_name
         return jsonify({'response': response})
     except Exception as e:
         print(f"Error in chat endpoint: {e}")  # Log for debugging

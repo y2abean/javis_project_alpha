@@ -99,8 +99,42 @@ function App() {
     return session ? session.messages : [];
   };
 
+  const [userName, setUserName] = useState(() => {
+    return localStorage.getItem('user_name') || '';
+  });
+
+  // Extract name from message
+  const extractNameFromMessage = (text) => {
+    // Regex for Korean: "내 이름은 OO야", "나는 OO라고 해", "내 이름은 OO입니다"
+    // Using Unicode escapes to avoid encoding issues
+    const nameRegex = /(?:\uB0B4\s*\uC774\uB984\uC740|\uB098\uB294)\s*(.*?)(?:(?:\uC774?\uB77C\uACE0\s*\uD574)|(?:\uC774?\uC57C)|(?:\uC785\uB2C8\uB2E4))/i;
+    const match = text.match(nameRegex);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+    // Simple check for English: "My name is OO"
+    const enMatch = text.match(/My name is (.*)/i);
+    if (enMatch && enMatch[1]) {
+      return enMatch[1].trim();
+    }
+    return null;
+  };
+
   const handleSendMessage = async (messageText) => {
     if (!currentSessionId) return;
+
+    // Check for name update
+    const detectedName = extractNameFromMessage(messageText);
+    if (detectedName) {
+      setUserName(detectedName);
+      localStorage.setItem('user_name', detectedName);
+    } else if (messageText.startsWith('/setname ')) {
+      const newName = messageText.replace('/setname ', '').trim();
+      if (newName) {
+        setUserName(newName);
+        localStorage.setItem('user_name', newName);
+      }
+    }
 
     const userMessage = { sender: 'user', text: messageText };
 
@@ -126,7 +160,11 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: messageText, history: history }),
+        body: JSON.stringify({
+          prompt: messageText,
+          history: history,
+          userName: userName || (detectedName ? detectedName : undefined) // Send current or just detected name
+        }),
       });
 
       if (!response.ok) {
@@ -148,7 +186,7 @@ function App() {
       console.error('Error:', error);
       const errorMessage = {
         sender: 'bot',
-        text: '죄송합니다. 서버에 연결할 수 없습니다. 백엔드 서버가 실행 중인지 확인해주세요.'
+        text: '\uC8C4\uC1A1\uD569\uB2C8\uB2E4. \uC11C\uBC84\uC5D0 \uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uBC31\uC5D4\uB4DC \uC11C\uBC84\uAC00 \uC2E4\uD589 \uC911\uC778\uC9C0 \uD655\uC778\uD574\uC8FC\uC138\uC694.'
       };
       setSessions(prev => prev.map(session => {
         if (session.id === currentSessionId) {
@@ -187,8 +225,8 @@ function App() {
         <div className="chat-container">
           {currentMessages.length === 0 ? (
             <div className="welcome-message">
-              <h1>안녕하세요!</h1>
-              <p>NEURON과 대화를 시작하세요</p>
+              <h1>\uC548\uB155\uD558\uC138\uC694!</h1>
+              <p>NEURON\uACFC \uB300\uD654\uB97C \uC2DC\uC791\uD558\uC138\uC694</p>
             </div>
           ) : (
             <ChatWindow messages={currentMessages} />
