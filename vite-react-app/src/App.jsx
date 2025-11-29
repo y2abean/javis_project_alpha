@@ -225,8 +225,8 @@ function App() {
         <div className="chat-container">
           {currentMessages.length === 0 ? (
             <div className="welcome-message">
-              <h1>\uC548\uB155\uD558\uC138\uC694!</h1>
-              <p>NEURON\uACFC \uB300\uD654\uB97C \uC2DC\uC791\uD558\uC138\uC694</p>
+              <h1>{'\uC548\uB155\uD558\uC138\uC694!'}</h1>
+              <p>{'NEURON\uACFC \uB300\uD654\uB97C \uC2DC\uC791\uD558\uC138\uC694'}</p>
             </div>
           ) : (
             <ChatWindow messages={currentMessages} />
