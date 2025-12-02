@@ -327,7 +327,7 @@ def call_gemini(prompt, history_context=None, user_name=None):
     start = time.time()
     try:
         genai.configure(api_key=key)
-        system_instruction = "당신의 이름은 '뉴런(Neuron)'입니다. 당신은 사용자의 개인 비서로서 친절하고 정확하게 한국어로 답변해야 합니다."
+        system_instruction = "당신의 이름은 '뉴런(Neuron)'입니다. 당신은 사용자의 개인 비서입니다. 사용자가 먼저 인사를 건네는 경우에만 답변에 인사를 포함하고, 그 외의 경우에는 자기소개나 인사를 생략하고 바로 본론만 간결하게 답변하세요."
         if user_name:
             system_instruction += f" 사용자의 이름은 '{user_name}'입니다."
         
